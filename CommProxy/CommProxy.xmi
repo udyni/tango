@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="ASCII"?>
+<pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
+  <classes name="CommProxy" pogoRevision="9.4">
+    <description description="Communication proxy for shared serial or TCP communication." title="Multipurpose communication proxy" sourcePath="/home/wyrdmeister/Documents/Work/SoftProjects/Udyni/Tango.hg/CommProxy" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="true" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
+      <inheritances classname="Device_Impl" sourcePath=""/>
+      <identification contact="at mail.polimi.it - michele.devetta" author="michele.devetta" emailDomain="mail.polimi.it" classFamily="Communication" siteSpecific="" platform="Unix Like" bus="Socket" manufacturer="none" reference=""/>
+    </description>
+    <deviceProperties name="DeviceAddress" mandatory="true" description="Address of the device. May be an IP address, a hostname or a device file.">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="Timeout" mandatory="true" description="Receive timeout in milliseconds">
+      <type xsi:type="pogoDsl:IntType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="AutoReconnect" mandatory="true" description="Enable autoreconnection">
+      <type xsi:type="pogoDsl:BooleanType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="DeviceType" mandatory="true" description="Device type. May be `serial` or `tcp`.&#xA;In `tcp` mode the DeviceAddress has the format `hostname:port`.">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="SerialBaud" description="Serial port baud rate">
+      <type xsi:type="pogoDsl:IntType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>38400</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="SerialSetup" description="Port setup in terms of data bits, parity and stop bits.&#xA;A string with format &lt;data>&lt;parity>&lt;stopbits>.&#xA;Data may be 5, 6, 7 or 8.&#xA;Parity may be N (none), E (even) or O (odd).&#xA;Stopbits may be 1 or 2.&#xA;Default is 8N1.">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>8N1</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Terminator" description="Command line terminator. May be `unix` (line feed, \n) or `pc` (carriage return plus line feed, `\r\n`), `micronix` (line feed plus carriage return, `\n\r`) or `pfeiffer` (carriage return, `\r`). Default is `unix`.">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>unix</DefaultPropValue>
+    </deviceProperties>
+    <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="none">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="Device state">
+        <type xsi:type="pogoDsl:StateType"/>
+      </argout>
+      <status abstract="true" inherited="true" concrete="true"/>
+    </commands>
+    <commands name="Status" description="This command gets the device status (stored in its device_status data member) and returns it to the caller." execMethod="dev_status" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="none">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="Device status">
+        <type xsi:type="pogoDsl:ConstStringType"/>
+      </argout>
+      <status abstract="true" inherited="true" concrete="true"/>
+    </commands>
+    <commands name="Connect" description="Open connection to device" execMethod="connect" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
+    <commands name="Disconnect" description="Close connection to device" execMethod="disconnect" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
+    <commands name="Flush" description="Make sure that the receive buffer is empty." execMethod="flush" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
+    <commands name="SendCommand" description="Send a command that does not expect a response from the device" execMethod="send_command" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="Command">
+        <type xsi:type="pogoDsl:StringType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
+    <commands name="SendCommandWithResponse" description="Send a command that expect a response from the device" execMethod="send_command_with_response" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="Command">
+        <type xsi:type="pogoDsl:StringType"/>
+      </argin>
+      <argout description="Response">
+        <type xsi:type="pogoDsl:StringType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
+    <commands name="SendCommandWithMultilineResponse" description="Send a command that expect a multiline response." execMethod="send_command_with_multiline_response" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="The function takes two arguments passed as strings:&#xA;1) the command&#xA;2) the timeout to wait for multiple lines in ms (default to 500ms)">
+        <type xsi:type="pogoDsl:StringArrayType"/>
+      </argin>
+      <argout description="The response as an array of strings">
+        <type xsi:type="pogoDsl:StringArrayType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </commands>
+    <preferences docHome="./doc_html" makefileHome="$(TANGO_HOME)"/>
+  </classes>
+</pogoDsl:PogoSystem>
