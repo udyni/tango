@@ -100,6 +100,6 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="Pressure" label="Pressure" unit="mbar" standardUnit="mbar" displayUnit="mbar" format="%.3E" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
-    <preferences docHome="./doc_html" makefileHome="$(TANGO_HOME)"/>
+    <preferences docHome="./doc_html" makefileHome="../Common/make_env"/>
   </classes>
 </pogoDsl:PogoSystem>

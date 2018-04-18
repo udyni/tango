@@ -48,6 +48,6 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="Analog voltage" label="" unit="V" standardUnit="V" displayUnit="V" format="%.02f" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </dynamicAttributes>
-    <preferences docHome="./doc_html" makefileHome="/usr/share/pogo/preferences"/>
+    <preferences docHome="./doc_html" makefileHome="../Common/make_env"/>
   </classes>
 </pogoDsl:PogoSystem>

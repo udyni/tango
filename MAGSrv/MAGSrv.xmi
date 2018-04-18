@@ -129,6 +129,6 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="Power consumption" label="Power" unit="W" standardUnit="W" displayUnit="W" format="%.1f" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
-    <preferences docHome="./doc_html" makefileHome="$(TANGO_HOME)"/>
+    <preferences docHome="./doc_html" makefileHome="../Common/make_env"/>
   </classes>
 </pogoDsl:PogoSystem>

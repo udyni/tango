@@ -103,6 +103,6 @@
       </argout>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </commands>
-    <preferences docHome="./doc_html" makefileHome="/usr/share/pogo/preferences"/>
+    <preferences docHome="./doc_html" makefileHome="../Common/make_env"/>
   </classes>
 </pogoDsl:PogoSystem>
