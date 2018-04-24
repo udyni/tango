@@ -142,12 +142,77 @@ class PowerAttrib: public Tango::Attr
 {
 public:
 	PowerAttrib():Attr("Power",
-			Tango::DEV_DOUBLE, Tango::READ) {};
+			Tango::DEV_FLOAT, Tango::READ) {};
 	~PowerAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
 		{(static_cast<MAGSrv *>(dev))->read_Power(att);}
 	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
 		{return (static_cast<MAGSrv *>(dev))->is_Power_allowed(ty);}
+};
+
+//	Attribute LastError class definition
+class LastErrorAttrib: public Tango::Attr
+{
+public:
+	LastErrorAttrib():Attr("LastError",
+			Tango::DEV_STRING, Tango::READ) {};
+	~LastErrorAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<MAGSrv *>(dev))->read_LastError(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<MAGSrv *>(dev))->is_LastError_allowed(ty);}
+};
+
+//	Attribute SoftVersion class definition
+class SoftVersionAttrib: public Tango::Attr
+{
+public:
+	SoftVersionAttrib():Attr("SoftVersion",
+			Tango::DEV_STRING, Tango::READ) {};
+	~SoftVersionAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<MAGSrv *>(dev))->read_SoftVersion(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<MAGSrv *>(dev))->is_SoftVersion_allowed(ty);}
+};
+
+//	Attribute SerialNo class definition
+class SerialNoAttrib: public Tango::Attr
+{
+public:
+	SerialNoAttrib():Attr("SerialNo",
+			Tango::DEV_STRING, Tango::READ) {};
+	~SerialNoAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<MAGSrv *>(dev))->read_SerialNo(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<MAGSrv *>(dev))->is_SerialNo_allowed(ty);}
+};
+
+//	Attribute MagB_TD class definition
+class MagB_TDAttrib: public Tango::Attr
+{
+public:
+	MagB_TDAttrib():Attr("MagB_TD",
+			Tango::DEV_USHORT, Tango::READ) {};
+	~MagB_TDAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<MAGSrv *>(dev))->read_MagB_TD(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<MAGSrv *>(dev))->is_MagB_TD_allowed(ty);}
+};
+
+//	Attribute MagB_TD_Time class definition
+class MagB_TD_TimeAttrib: public Tango::Attr
+{
+public:
+	MagB_TD_TimeAttrib():Attr("MagB_TD_Time",
+			Tango::DEV_FLOAT, Tango::READ) {};
+	~MagB_TD_TimeAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<MAGSrv *>(dev))->read_MagB_TD_Time(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<MAGSrv *>(dev))->is_MagB_TD_Time_allowed(ty);}
 };
 
 

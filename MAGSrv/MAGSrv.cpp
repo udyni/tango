@@ -73,7 +73,12 @@ static const char *RcsId = "$Id:  $";
 //  OperatingHours        |  Tango::DevFloat	Scalar
 //  Current               |  Tango::DevFloat	Scalar
 //  BearingTemperature    |  Tango::DevUShort	Scalar
-//  Power                 |  Tango::DevDouble	Scalar
+//  Power                 |  Tango::DevFloat	Scalar
+//  LastError             |  Tango::DevString	Scalar
+//  SoftVersion           |  Tango::DevString	Scalar
+//  SerialNo              |  Tango::DevString	Scalar
+//  MagB_TD               |  Tango::DevUShort	Scalar
+//  MagB_TD_Time          |  Tango::DevFloat	Scalar
 //================================================================
 
 namespace MAGSrv_ns
@@ -138,6 +143,13 @@ void MAGSrv::delete_device()
 	}
 	mt = NULL;
 
+	if(*attr_SerialNo_read)
+		CORBA::string_free(*attr_SerialNo_read);
+	if(*attr_SoftVersion_read)
+		CORBA::string_free(*attr_SoftVersion_read);
+	if(*attr_LastError_read)
+		CORBA::string_free(*attr_LastError_read);
+
 	/*----- PROTECTED REGION END -----*/	//	MAGSrv::delete_device
 	delete[] attr_Frequency_read;
 	delete[] attr_MotorTemperature_read;
@@ -146,6 +158,11 @@ void MAGSrv::delete_device()
 	delete[] attr_Current_read;
 	delete[] attr_BearingTemperature_read;
 	delete[] attr_Power_read;
+	delete[] attr_LastError_read;
+	delete[] attr_SoftVersion_read;
+	delete[] attr_SerialNo_read;
+	delete[] attr_MagB_TD_read;
+	delete[] attr_MagB_TD_Time_read;
 }
 
 //--------------------------------------------------------
@@ -173,12 +190,21 @@ void MAGSrv::init_device()
 	attr_OperatingHours_read = new Tango::DevFloat[1];
 	attr_Current_read = new Tango::DevFloat[1];
 	attr_BearingTemperature_read = new Tango::DevUShort[1];
-	attr_Power_read = new Tango::DevDouble[1];
+	attr_Power_read = new Tango::DevFloat[1];
+	attr_LastError_read = new Tango::DevString[1];
+	attr_SoftVersion_read = new Tango::DevString[1];
+	attr_SerialNo_read = new Tango::DevString[1];
+	attr_MagB_TD_read = new Tango::DevUShort[1];
+	attr_MagB_TD_Time_read = new Tango::DevFloat[1];
 	//	No longer if mandatory property not set.
 	if (mandatoryNotDefined)
 		return;
 
 	/*----- PROTECTED REGION ID(MAGSrv::init_device) ENABLED START -----*/
+
+	*attr_SerialNo_read = CORBA::string_dup("");
+	*attr_SoftVersion_read = CORBA::string_dup("");
+	*attr_LastError_read = CORBA::string_dup("");
 
 	//	Initialize device
 	set_state(Tango::INIT);
@@ -304,7 +330,7 @@ void MAGSrv::check_mandatory_property(Tango::DbDatum &class_prop, Tango::DbDatum
 //--------------------------------------------------------
 void MAGSrv::always_executed_hook()
 {
-	DEBUG_STREAM << "MAGSrv::always_executed_hook()  " << device_name << endl;
+	//DEBUG_STREAM << "MAGSrv::always_executed_hook()  " << device_name << endl;
 	if (mandatoryNotDefined)
 	{
 		string	status(get_status());
@@ -328,7 +354,7 @@ void MAGSrv::always_executed_hook()
 //--------------------------------------------------------
 void MAGSrv::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 {
-	DEBUG_STREAM << "MAGSrv::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_attr_hardware) ENABLED START -----*/
 
 	//	Add your own code
@@ -347,7 +373,7 @@ void MAGSrv::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 //--------------------------------------------------------
 void MAGSrv::read_Frequency(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "MAGSrv::read_Frequency(Tango::Attribute &attr) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_Frequency(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_Frequency) ENABLED START -----*/
 
 	*attr_Frequency_read = mt->getFrequency();
@@ -368,7 +394,7 @@ void MAGSrv::read_Frequency(Tango::Attribute &attr)
 //--------------------------------------------------------
 void MAGSrv::read_MotorTemperature(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "MAGSrv::read_MotorTemperature(Tango::Attribute &attr) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_MotorTemperature(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_MotorTemperature) ENABLED START -----*/
 
 	*attr_MotorTemperature_read = mt->getMotorT();
@@ -389,7 +415,7 @@ void MAGSrv::read_MotorTemperature(Tango::Attribute &attr)
 //--------------------------------------------------------
 void MAGSrv::read_ConverterTemperature(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "MAGSrv::read_ConverterTemperature(Tango::Attribute &attr) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_ConverterTemperature(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_ConverterTemperature) ENABLED START -----*/
 
 	*attr_ConverterTemperature_read = mt->getConverterT();
@@ -410,7 +436,7 @@ void MAGSrv::read_ConverterTemperature(Tango::Attribute &attr)
 //--------------------------------------------------------
 void MAGSrv::read_OperatingHours(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "MAGSrv::read_OperatingHours(Tango::Attribute &attr) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_OperatingHours(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_OperatingHours) ENABLED START -----*/
 
 	*attr_OperatingHours_read = mt->getOperatingHours();
@@ -431,7 +457,7 @@ void MAGSrv::read_OperatingHours(Tango::Attribute &attr)
 //--------------------------------------------------------
 void MAGSrv::read_Current(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "MAGSrv::read_Current(Tango::Attribute &attr) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_Current(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_Current) ENABLED START -----*/
 
 	*attr_Current_read = mt->getCurrent();
@@ -452,7 +478,7 @@ void MAGSrv::read_Current(Tango::Attribute &attr)
 //--------------------------------------------------------
 void MAGSrv::read_BearingTemperature(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "MAGSrv::read_BearingTemperature(Tango::Attribute &attr) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_BearingTemperature(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_BearingTemperature) ENABLED START -----*/
 
 	*attr_BearingTemperature_read = mt->getBearingT();
@@ -467,13 +493,13 @@ void MAGSrv::read_BearingTemperature(Tango::Attribute &attr)
  *	Read attribute Power related method
  *	Description: Power consumption
  *
- *	Data type:	Tango::DevDouble
+ *	Data type:	Tango::DevFloat
  *	Attr type:	Scalar
  */
 //--------------------------------------------------------
 void MAGSrv::read_Power(Tango::Attribute &attr)
 {
-	DEBUG_STREAM << "MAGSrv::read_Power(Tango::Attribute &attr) entering... " << endl;
+	//DEBUG_STREAM << "MAGSrv::read_Power(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(MAGSrv::read_Power) ENABLED START -----*/
 
 	*attr_Power_read = mt->getPower();
@@ -482,6 +508,102 @@ void MAGSrv::read_Power(Tango::Attribute &attr)
 	attr.set_value(attr_Power_read);
 
 	/*----- PROTECTED REGION END -----*/	//	MAGSrv::read_Power
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute LastError related method
+ *	Description:
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void MAGSrv::read_LastError(Tango::Attribute &attr)
+{
+	//DEBUG_STREAM << "MAGSrv::read_LastError(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(MAGSrv::read_LastError) ENABLED START -----*/
+	//	Set the attribute value
+	attr.set_value(attr_LastError_read);
+
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::read_LastError
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute SoftVersion related method
+ *	Description:
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void MAGSrv::read_SoftVersion(Tango::Attribute &attr)
+{
+	//DEBUG_STREAM << "MAGSrv::read_SoftVersion(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(MAGSrv::read_SoftVersion) ENABLED START -----*/
+	//	Set the attribute value
+	attr.set_value(attr_SoftVersion_read);
+
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::read_SoftVersion
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute SerialNo related method
+ *	Description:
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void MAGSrv::read_SerialNo(Tango::Attribute &attr)
+{
+	//DEBUG_STREAM << "MAGSrv::read_SerialNo(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(MAGSrv::read_SerialNo) ENABLED START -----*/
+	//	Set the attribute value
+	attr.set_value(attr_SerialNo_read);
+
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::read_SerialNo
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute MagB_TD related method
+ *	Description: Total number of recognized magnetic bearing touch downs
+ *
+ *	Data type:	Tango::DevUShort
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void MAGSrv::read_MagB_TD(Tango::Attribute &attr)
+{
+	//DEBUG_STREAM << "MAGSrv::read_MagB_TD(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(MAGSrv::read_MagB_TD) ENABLED START -----*/
+
+	*attr_MagB_TD_read = mt->getMB_TD();
+
+	//	Set the attribute value
+	attr.set_value(attr_MagB_TD_read);
+
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::read_MagB_TD
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute MagB_TD_Time related method
+ *	Description: Total touch down time of magnetic bearings
+ *
+ *	Data type:	Tango::DevFloat
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void MAGSrv::read_MagB_TD_Time(Tango::Attribute &attr)
+{
+	//DEBUG_STREAM << "MAGSrv::read_MagB_TD_Time(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(MAGSrv::read_MagB_TD_Time) ENABLED START -----*/
+
+	*attr_MagB_TD_Time_read = mt->getMB_TD_Time();
+
+	//	Set the attribute value
+	attr.set_value(attr_MagB_TD_Time_read);
+
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::read_MagB_TD_Time
 }
 
 //--------------------------------------------------------
@@ -772,7 +894,7 @@ void *MagSerial::run_undetached(void *arg) {
 
 	struct timeval beg, end;
 
-	const uint16_t parameters[] = {6, 7, 44, 125};
+	const uint16_t parameters[] = {2, 52, 7, 44, 125, 105, 106};
 	size_t param_counter = 0;
 
 	// Telegram buffer
@@ -794,6 +916,11 @@ void *MagSerial::run_undetached(void *arg) {
 			*((uint16_t*)(buffer+1)) = bswap_16(parameters[param_counter] | (0x1 << 12));
 			*((uint32_t*)(buffer+5)) = 0;
 			*((uint16_t*)(buffer+9)) = bswap_16(_control_reg);
+
+			// Remove reset bit once sent
+			if(_control_reg & 0x80) {
+				_control_reg = _control_reg & ~0x80;
+			}
 
 			try {
 				// Allocate buffer
@@ -820,20 +947,37 @@ void *MagSerial::run_undetached(void *arg) {
 				if(dout >> response) {
 					// Extract parameter number
 					uint16_t num = bswap_16(*((uint16_t*)(response->get_buffer()+1))) & 0x07FF;
-					if(num == 6) {
-						float val = float(bswap_32(*((uint32_t*)(response->get_buffer()+5)))) / 10.0;
-						if(val != _power) {
-							*_ev_power = _power;
-							_parent->push_change_event("Power", _ev_power);
-						}
-						_power = val;
-					} else if(num == 7) {
+
+					if(num == 7) { // Motor temperature
 						uint16_t val = uint16_t(bswap_32(*((uint32_t*)(response->get_buffer()+5))));
 						if(val != _motor_t) {
 							*_ev_mt = val;
 							_parent->push_change_event("MotorTemperature", _ev_mt);
 						}
 						_motor_t = val;
+
+					} else if(num == 2) { // Software version
+						uint32_t val = bswap_32(*((uint32_t*)(response->get_buffer()+5)));
+						stringstream ver;
+						ver << (val/10000) << "." << ((val / 100) % 100) << "." << (val % 100);
+						CORBA::string_free(*(_parent->attr_SoftVersion_read));
+						*(_parent->attr_SoftVersion_read) = CORBA::string_dup(ver.str().c_str());
+
+					} else if(num == 52) {
+						uint32_t val = bswap_32(*((uint32_t*)(response->get_buffer()+5)));
+						stringstream ver;
+						ver << val;
+						CORBA::string_free(*(_parent->attr_SerialNo_read));
+						*(_parent->attr_SerialNo_read) = CORBA::string_dup(ver.str().c_str());
+
+					} else if(num == 105) { // Number of touch downs
+						uint16_t val = uint16_t(bswap_32(*((uint32_t*)(response->get_buffer()+5))));
+						_mb_td = val;
+
+					} else if(num == 106) { // Total touch down time
+						float val = float(bswap_32(*((uint32_t*)(response->get_buffer()+5)))) / 100.0;
+						_mb_td_time = val;
+
 					} else if(num == 44) {
 						float val = float(bswap_32(*((uint32_t*)(response->get_buffer()+5)))) / 100.0;
 						if(::fabs((val - _op_hours) / _op_hours) > 0.01) {
@@ -841,6 +985,7 @@ void *MagSerial::run_undetached(void *arg) {
 							_parent->push_change_event("OperatingHours", _ev_ophours);
 						}
 						_op_hours = val;
+
 					} else if(num == 125) {
 						uint16_t val = uint16_t(bswap_32(*((uint32_t*)(response->get_buffer()+5))));
 						if(val != _bearing_t) {
@@ -859,6 +1004,8 @@ void *MagSerial::run_undetached(void *arg) {
 					// Extract common parameters
 					{
 						uint16_t val = bswap_16(*((uint16_t*)(response->get_buffer()+11)));
+						if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Pump frequency: " << val << endl;
 						if(val != _freq) {
 							*_ev_freq = val;
 							_parent->push_change_event("Frequency", _ev_freq);
@@ -867,6 +1014,8 @@ void *MagSerial::run_undetached(void *arg) {
 					}
 					{
 						uint16_t val = bswap_16(*((uint16_t*)(response->get_buffer()+13)));
+						if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Pump converter temperature: " << val << endl;
 						if(val != _conv_t) {
 							*_ev_ct = val;
 							_parent->push_change_event("ConverterTemperature", _ev_ct);
@@ -875,11 +1024,25 @@ void *MagSerial::run_undetached(void *arg) {
 					}
 					{
 						float val = float(bswap_16(*((uint16_t*)(response->get_buffer()+15)))) / 10.0;
+						if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Pump current: " << val << endl;
 						if(::fabs((_current - val) / _current) > 0.01) {
 							*_ev_current = val;
 							_parent->push_change_event("Current", _ev_current);
 						}
 						_current = val;
+					}
+					{
+						float val = float(bswap_16(*((uint16_t*)(response->get_buffer()+19)))) / 10.0;
+						if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Pump voltage: " << val << endl;
+						if(::fabs((_power - _current * val) / _power) > 0.01) {
+							*_ev_power = _current * val;
+							_parent->push_change_event("Power", _ev_power);
+						}
+						_power = _current * val;
+						if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Pump power: " << _current * val << endl;
 					}
 
 					if((_status_reg & MAG_STATUS_READY) && (_status_reg & MAG_STATUS_PARAM) && (_status_reg & MAG_STATUS_PROCESS)) {
@@ -952,6 +1115,21 @@ void *MagSerial::run_undetached(void *arg) {
 								}
 							}
 						}
+					} else {
+						// Pump not ready. May be a failure.
+						if(_status_reg & MAG_STATUS_WTEMP) {
+							_parent->set_state(Tango::FAULT);
+							_parent->set_status("Pump not ready because of overtemperature error.");
+						} else if(_status_reg & MAG_STATUS_WFAIL) {
+							_parent->set_state(Tango::FAULT);
+							_parent->set_status("Pump not ready because failure counter was triggered.");
+						} else if(_status_reg & MAG_STATUS_WOVERLOAD) {
+							_parent->set_state(Tango::FAULT);
+							_parent->set_status("Pump not ready because of overload.");
+						} else {
+							_parent->set_state(Tango::FAULT);
+							_parent->set_status("Pump not ready.");
+						}
 					}
 
 				} else {
@@ -972,13 +1150,15 @@ void *MagSerial::run_undetached(void *arg) {
 					} catch(Tango::DevFailed &e) {
 						error_log_exception(_parent, "Failed to flush buffer in exception handler", e);
 					}
+				} else if(_parent->get_logger()->is_debug_enabled()) {
+					debug_log_exception(_parent, "Got exception in polling loop", e);
 				}
 			}
 
 			// Increment parameter counter
 			param_counter++;
 			if(param_counter >= sizeof(parameters)/sizeof(uint16_t))
-				param_counter = 0;
+				param_counter = 2; // The first two parameters need to be read only once...
 
 			// Sleep for polling time minus time spent polling the pump...
 			gettimeofday(&end, NULL);

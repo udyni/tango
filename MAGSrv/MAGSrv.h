@@ -117,7 +117,12 @@ public:
 	Tango::DevFloat	*attr_OperatingHours_read;
 	Tango::DevFloat	*attr_Current_read;
 	Tango::DevUShort	*attr_BearingTemperature_read;
-	Tango::DevDouble	*attr_Power_read;
+	Tango::DevFloat	*attr_Power_read;
+	Tango::DevString	*attr_LastError_read;
+	Tango::DevString	*attr_SoftVersion_read;
+	Tango::DevString	*attr_SerialNo_read;
+	Tango::DevUShort	*attr_MagB_TD_read;
+	Tango::DevFloat	*attr_MagB_TD_Time_read;
 
 //	Constructors and destructors
 public:
@@ -212,7 +217,7 @@ public:
 	virtual bool is_ConverterTemperature_allowed(Tango::AttReqType type);
 /**
  *	Attribute OperatingHours related methods
- *	Description:
+ *	Description: 
  *
  *	Data type:	Tango::DevFloat
  *	Attr type:	Scalar
@@ -241,11 +246,56 @@ public:
  *	Attribute Power related methods
  *	Description: Power consumption
  *
- *	Data type:	Tango::DevDouble
+ *	Data type:	Tango::DevFloat
  *	Attr type:	Scalar
  */
 	virtual void read_Power(Tango::Attribute &attr);
 	virtual bool is_Power_allowed(Tango::AttReqType type);
+/**
+ *	Attribute LastError related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+	virtual void read_LastError(Tango::Attribute &attr);
+	virtual bool is_LastError_allowed(Tango::AttReqType type);
+/**
+ *	Attribute SoftVersion related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+	virtual void read_SoftVersion(Tango::Attribute &attr);
+	virtual bool is_SoftVersion_allowed(Tango::AttReqType type);
+/**
+ *	Attribute SerialNo related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevString
+ *	Attr type:	Scalar
+ */
+	virtual void read_SerialNo(Tango::Attribute &attr);
+	virtual bool is_SerialNo_allowed(Tango::AttReqType type);
+/**
+ *	Attribute MagB_TD related methods
+ *	Description: Total number of recognized magnetic bearing touch downs
+ *
+ *	Data type:	Tango::DevUShort
+ *	Attr type:	Scalar
+ */
+	virtual void read_MagB_TD(Tango::Attribute &attr);
+	virtual bool is_MagB_TD_allowed(Tango::AttReqType type);
+/**
+ *	Attribute MagB_TD_Time related methods
+ *	Description: Total touch down time of magnetic bearings
+ *
+ *	Data type:	Tango::DevFloat
+ *	Attr type:	Scalar
+ */
+	virtual void read_MagB_TD_Time(Tango::Attribute &attr);
+	virtual bool is_MagB_TD_Time_allowed(Tango::AttReqType type);
 
 
 	//--------------------------------------------------------
@@ -326,7 +376,7 @@ public:
 	void stop() { _control_reg = _control_reg & ~0x1; }
 
 	// Reset pump controller
-	void reset() {};
+	void reset() { _control_reg = _control_reg | 0x80; };
 
 	// Get errors
 	Tango::DevString getError(uint16_t num);
@@ -340,6 +390,10 @@ public:
 	uint16_t getFrequency()const { return _freq; }
 	float getCurrent()const { return _current; }
 	float getPower()const { return _power; }
+
+	// Bearing touch downs
+	uint16_t getMB_TD()const { return _mb_td; }
+	float getMB_TD_Time()const { return _mb_td_time; }
 
 	// Operating hours
 	float getOperatingHours()const { return _op_hours; }
@@ -373,6 +427,10 @@ private:
 
 	// Status register
 	uint16_t _status_reg;
+
+	// Bearing touch downs
+	uint16_t _mb_td;
+	float _mb_td_time;
 
 	// Temperatures
 	uint16_t _conv_t;

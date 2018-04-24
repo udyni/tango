@@ -162,6 +162,86 @@ bool MAGSrv::is_Power_allowed(TANGO_UNUSED(Tango::AttReqType type))
 	return true;
 }
 
+//--------------------------------------------------------
+/**
+ *	Method      : MAGSrv::is_LastError_allowed()
+ *	Description : Execution allowed for LastError attribute
+ */
+//--------------------------------------------------------
+bool MAGSrv::is_LastError_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for LastError attribute in read access.
+	/*----- PROTECTED REGION ID(MAGSrv::LastErrorStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::LastErrorStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : MAGSrv::is_SoftVersion_allowed()
+ *	Description : Execution allowed for SoftVersion attribute
+ */
+//--------------------------------------------------------
+bool MAGSrv::is_SoftVersion_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for SoftVersion attribute in read access.
+	/*----- PROTECTED REGION ID(MAGSrv::SoftVersionStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::SoftVersionStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : MAGSrv::is_SerialNo_allowed()
+ *	Description : Execution allowed for SerialNo attribute
+ */
+//--------------------------------------------------------
+bool MAGSrv::is_SerialNo_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for SerialNo attribute in read access.
+	/*----- PROTECTED REGION ID(MAGSrv::SerialNoStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::SerialNoStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : MAGSrv::is_MagB_TD_allowed()
+ *	Description : Execution allowed for MagB_TD attribute
+ */
+//--------------------------------------------------------
+bool MAGSrv::is_MagB_TD_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for MagB_TD attribute in read access.
+	/*----- PROTECTED REGION ID(MAGSrv::MagB_TDStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::MagB_TDStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : MAGSrv::is_MagB_TD_Time_allowed()
+ *	Description : Execution allowed for MagB_TD_Time attribute
+ */
+//--------------------------------------------------------
+bool MAGSrv::is_MagB_TD_Time_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for MagB_TD_Time attribute in read access.
+	/*----- PROTECTED REGION ID(MAGSrv::MagB_TD_TimeStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	MAGSrv::MagB_TD_TimeStateAllowed_READ
+	return true;
+}
+
 
 //=================================================
 //		Commands Allowed Methods

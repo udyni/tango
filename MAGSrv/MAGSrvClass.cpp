@@ -445,6 +445,8 @@ void MAGSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	/*----- PROTECTED REGION ID(MAGSrvClass::attribute_factory_before) ENABLED START -----*/
 
 	//	Add your own code
+	
+	// "\xC2\xB0" "C"
 
 	/*----- PROTECTED REGION END -----*/	//	MAGSrvClass::attribute_factory_before
 	//	Attribute : Frequency
@@ -477,9 +479,9 @@ void MAGSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	Tango::UserDefaultAttrProp	motortemperature_prop;
 	motortemperature_prop.set_description("Actual motor temperature");
 	motortemperature_prop.set_label("Motor temperature");
-	motortemperature_prop.set_unit("°C");
-	motortemperature_prop.set_standard_unit("°C");
-	motortemperature_prop.set_display_unit("°C");
+	motortemperature_prop.set_unit("\xC2\xB0" "C");
+	motortemperature_prop.set_standard_unit("\xC2\xB0" "C");
+	motortemperature_prop.set_display_unit("\xC2\xB0" "C");
 	motortemperature_prop.set_format("%d");
 	//	max_value	not set for MotorTemperature
 	//	min_value	not set for MotorTemperature
@@ -502,9 +504,9 @@ void MAGSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	Tango::UserDefaultAttrProp	convertertemperature_prop;
 	convertertemperature_prop.set_description("Actual converter temperature");
 	convertertemperature_prop.set_label("Converter temperature");
-	convertertemperature_prop.set_unit("°C");
-	convertertemperature_prop.set_standard_unit("°C");
-	convertertemperature_prop.set_display_unit("°C");
+	convertertemperature_prop.set_unit("\xC2\xB0" "C");
+	convertertemperature_prop.set_standard_unit("\xC2\xB0" "C");
+	convertertemperature_prop.set_display_unit("\xC2\xB0" "C");
 	convertertemperature_prop.set_format("%d");
 	//	max_value	not set for ConverterTemperature
 	//	min_value	not set for ConverterTemperature
@@ -577,9 +579,9 @@ void MAGSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	Tango::UserDefaultAttrProp	bearingtemperature_prop;
 	bearingtemperature_prop.set_description("Actual bearing temperature");
 	bearingtemperature_prop.set_label("Bearing temperature");
-	bearingtemperature_prop.set_unit("°C");
-	bearingtemperature_prop.set_standard_unit("°C");
-	bearingtemperature_prop.set_display_unit("°C");
+	bearingtemperature_prop.set_unit("\xC2\xB0" "C");
+	bearingtemperature_prop.set_standard_unit("\xC2\xB0" "C");
+	bearingtemperature_prop.set_display_unit("\xC2\xB0" "C");
 	bearingtemperature_prop.set_format("%d");
 	//	max_value	not set for BearingTemperature
 	//	min_value	not set for BearingTemperature
@@ -621,6 +623,126 @@ void MAGSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	//	Not Memorized
 	power->set_change_event(true, false);
 	att_list.push_back(power);
+
+	//	Attribute : LastError
+	LastErrorAttrib	*lasterror = new LastErrorAttrib();
+	Tango::UserDefaultAttrProp	lasterror_prop;
+	//	description	not set for LastError
+	//	label	not set for LastError
+	//	unit	not set for LastError
+	//	standard_unit	not set for LastError
+	//	display_unit	not set for LastError
+	//	format	not set for LastError
+	//	max_value	not set for LastError
+	//	min_value	not set for LastError
+	//	max_alarm	not set for LastError
+	//	min_alarm	not set for LastError
+	//	max_warning	not set for LastError
+	//	min_warning	not set for LastError
+	//	delta_t	not set for LastError
+	//	delta_val	not set for LastError
+	
+	lasterror->set_default_properties(lasterror_prop);
+	//	Not Polled
+	lasterror->set_disp_level(Tango::OPERATOR);
+	//	Not Memorized
+	att_list.push_back(lasterror);
+
+	//	Attribute : SoftVersion
+	SoftVersionAttrib	*softversion = new SoftVersionAttrib();
+	Tango::UserDefaultAttrProp	softversion_prop;
+	//	description	not set for SoftVersion
+	softversion_prop.set_label("Software version");
+	//	unit	not set for SoftVersion
+	//	standard_unit	not set for SoftVersion
+	//	display_unit	not set for SoftVersion
+	//	format	not set for SoftVersion
+	//	max_value	not set for SoftVersion
+	//	min_value	not set for SoftVersion
+	//	max_alarm	not set for SoftVersion
+	//	min_alarm	not set for SoftVersion
+	//	max_warning	not set for SoftVersion
+	//	min_warning	not set for SoftVersion
+	//	delta_t	not set for SoftVersion
+	//	delta_val	not set for SoftVersion
+	
+	softversion->set_default_properties(softversion_prop);
+	//	Not Polled
+	softversion->set_disp_level(Tango::EXPERT);
+	//	Not Memorized
+	att_list.push_back(softversion);
+
+	//	Attribute : SerialNo
+	SerialNoAttrib	*serialno = new SerialNoAttrib();
+	Tango::UserDefaultAttrProp	serialno_prop;
+	//	description	not set for SerialNo
+	serialno_prop.set_label("Serial number");
+	//	unit	not set for SerialNo
+	//	standard_unit	not set for SerialNo
+	//	display_unit	not set for SerialNo
+	//	format	not set for SerialNo
+	//	max_value	not set for SerialNo
+	//	min_value	not set for SerialNo
+	//	max_alarm	not set for SerialNo
+	//	min_alarm	not set for SerialNo
+	//	max_warning	not set for SerialNo
+	//	min_warning	not set for SerialNo
+	//	delta_t	not set for SerialNo
+	//	delta_val	not set for SerialNo
+	
+	serialno->set_default_properties(serialno_prop);
+	//	Not Polled
+	serialno->set_disp_level(Tango::EXPERT);
+	//	Not Memorized
+	att_list.push_back(serialno);
+
+	//	Attribute : MagB_TD
+	MagB_TDAttrib	*magb_td = new MagB_TDAttrib();
+	Tango::UserDefaultAttrProp	magb_td_prop;
+	magb_td_prop.set_description("Total number of recognized magnetic bearing touch downs");
+	magb_td_prop.set_label("Bearing touch downs");
+	//	unit	not set for MagB_TD
+	//	standard_unit	not set for MagB_TD
+	//	display_unit	not set for MagB_TD
+	//	format	not set for MagB_TD
+	//	max_value	not set for MagB_TD
+	//	min_value	not set for MagB_TD
+	//	max_alarm	not set for MagB_TD
+	//	min_alarm	not set for MagB_TD
+	//	max_warning	not set for MagB_TD
+	//	min_warning	not set for MagB_TD
+	//	delta_t	not set for MagB_TD
+	//	delta_val	not set for MagB_TD
+	
+	magb_td->set_default_properties(magb_td_prop);
+	//	Not Polled
+	magb_td->set_disp_level(Tango::EXPERT);
+	//	Not Memorized
+	att_list.push_back(magb_td);
+
+	//	Attribute : MagB_TD_Time
+	MagB_TD_TimeAttrib	*magb_td_time = new MagB_TD_TimeAttrib();
+	Tango::UserDefaultAttrProp	magb_td_time_prop;
+	magb_td_time_prop.set_description("Total touch down time of magnetic bearings");
+	magb_td_time_prop.set_label("Bearing touch down time");
+	magb_td_time_prop.set_unit("s");
+	magb_td_time_prop.set_standard_unit("s");
+	magb_td_time_prop.set_display_unit("s");
+	magb_td_time_prop.set_format("%.2f");
+	//	max_value	not set for MagB_TD_Time
+	//	min_value	not set for MagB_TD_Time
+	//	max_alarm	not set for MagB_TD_Time
+	//	min_alarm	not set for MagB_TD_Time
+	//	max_warning	not set for MagB_TD_Time
+	//	min_warning	not set for MagB_TD_Time
+	//	delta_t	not set for MagB_TD_Time
+	//	delta_val	not set for MagB_TD_Time
+	
+	magb_td_time->set_default_properties(magb_td_time_prop);
+	//	Not Polled
+	magb_td_time->set_disp_level(Tango::EXPERT);
+	//	Not Memorized
+	att_list.push_back(magb_td_time);
 
 
 	//	Create a list of static attributes
