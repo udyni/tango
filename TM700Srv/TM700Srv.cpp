@@ -1319,91 +1319,106 @@ void TM700Monitor::parse_response(const string& response, int param, TM700_param
 					(const char *)"TM700Monitor::parse_response()");
 	}
 
-	// Check CRC
-	int crc = 0;
-	int crc_o = std::stoi(response.substr(response.length() - 3, 3));
-	for(size_t i = 0; i < response.length() - 3; i++) {
-		crc += (int)response[i];
-	}
-	crc = crc % 256;
-	if(crc != crc_o) {
-		// Corrupted message
-		Tango::Except::throw_exception(
-					(const char *)"Controller error",
-					(const char *)"Malformed response. CRC didn't match",
-					(const char *)"TM700Monitor::parse_response()");
-	}
-
-	// Check address
-	int address_o = std::stoi(response.substr(0, 3));
-	if(address_o != _address) {
-		// Bad address in response
-		Tango::Except::throw_exception(
-					(const char *)"Controller error",
-					(const char *)"Malformed response. Address in response does not match that of request",
-					(const char *)"TM700Monitor::parse_response()");
-	}
-
-	// Check parameter number
-	int param_o = std::stoi(response.substr(5, 3));
-	if(param_o != param) {
-		// Bad parameter in response
-		Tango::Except::throw_exception(
-					(const char *)"Controller error",
-					(const char *)"Malformed response. Parameter number in response does not match that of request",
-					(const char *)"TM700Monitor::parse_response()");
-	}
-
-	// Get data length
-	int len = std::stoi(response.substr(8, 2));
-
-	// Check if we have an error
-	if(len == 6) {
-		if(response.compare(10, len, "NO_DEF") == 0) {
-			// Parameter does not exist
-			Tango::Except::throw_exception(
-						(const char *)"Controller error",
-						(const char *)"Requested parameter does not exist",
-						(const char *)"TM700Monitor::check_error()");
-
-		} else if(response.compare(10, len, "_RANGE") == 0) {
-			// Value outside permitted range
-			Tango::Except::throw_exception(
-						(const char *)"Controller error",
-						(const char *)"Parameter value out of range",
-						(const char *)"TM700Monitor::check_error()");
-
-		} else if(response.compare(10, len, "_LOGIC") == 0) {
-			// Logic access violation
-			Tango::Except::throw_exception(
-						(const char *)"Controller error",
-						(const char *)"Logic access violation",
-						(const char *)"TM700Monitor::check_error()");
+	try {
+	
+		// Check CRC
+		int crc = 0;
+		int crc_o = std::stoi(response.substr(response.length() - 3, 3));
+		for(size_t i = 0; i < response.length() - 3; i++) {
+			crc += (int)response[i];
 		}
-	}
+		crc = crc % 256;
+		if(crc != crc_o) {
+			// Corrupted message
+			Tango::Except::throw_exception(
+						(const char *)"Controller error",
+						(const char *)"Malformed response. CRC didn't match",
+						(const char *)"TM700Monitor::parse_response()");
+		}
 
-	// Everything fine! Let's extract response
-	if(out.dtype == TM700_DTYPE_BOOL) {
-		if(response.compare(10, len, "111111") == 0)
-			out.b = true;
-		else
-			out.b = false;
+		// Check address
+		int address_o = std::stoi(response.substr(0, 3));
+		if(address_o != _address) {
+			// Bad address in response
+			Tango::Except::throw_exception(
+						(const char *)"Controller error",
+						(const char *)"Malformed response. Address in response does not match that of request",
+						(const char *)"TM700Monitor::parse_response()");
+		}
 
-	} else if(out.dtype == TM700_DTYPE_ULONG || out.dtype == TM700_DTYPE_UINT) {
-		out.i = std::stoi(response.substr(10, len));
+		// Check parameter number
+		int param_o = std::stoi(response.substr(5, 3));
+		if(param_o != param) {
+			// Bad parameter in response
+			Tango::Except::throw_exception(
+						(const char *)"Controller error",
+						(const char *)"Malformed response. Parameter number in response does not match that of request",
+						(const char *)"TM700Monitor::parse_response()");
+		}
 
-	} else if(out.dtype == TM700_DTYPE_FLOAT) {
-		int val = std::stoi(response.substr(10, len));
-		out.f = static_cast<float>(val) / 100.0;
+		// Get data length
+		int len = std::stoi(response.substr(8, 2));
 
-	} else if(out.dtype == TM700_DTYPE_STR || out.dtype == TM700_DTYPE_TEXT) {
-		out.s = response.substr(10, len);
+		// Check if we have an error
+		if(len == 6) {
+			if(response.compare(10, len, "NO_DEF") == 0) {
+				// Parameter does not exist
+				Tango::Except::throw_exception(
+							(const char *)"Controller error",
+							(const char *)"Requested parameter does not exist",
+							(const char *)"TM700Monitor::check_error()");
 
-	} else {
-		// This should never happen
+			} else if(response.compare(10, len, "_RANGE") == 0) {
+				// Value outside permitted range
+				Tango::Except::throw_exception(
+							(const char *)"Controller error",
+							(const char *)"Parameter value out of range",
+							(const char *)"TM700Monitor::check_error()");
+
+			} else if(response.compare(10, len, "_LOGIC") == 0) {
+				// Logic access violation
+				Tango::Except::throw_exception(
+							(const char *)"Controller error",
+							(const char *)"Logic access violation",
+							(const char *)"TM700Monitor::check_error()");
+			}
+		}
+
+		// Everything fine! Let's extract response
+		if(out.dtype == TM700_DTYPE_BOOL) {
+			if(response.compare(10, len, "111111") == 0)
+				out.b = true;
+			else
+				out.b = false;
+
+		} else if(out.dtype == TM700_DTYPE_ULONG || out.dtype == TM700_DTYPE_UINT) {
+			out.i = std::stoi(response.substr(10, len));
+
+		} else if(out.dtype == TM700_DTYPE_FLOAT) {
+			int val = std::stoi(response.substr(10, len));
+			out.f = static_cast<float>(val) / 100.0;
+
+		} else if(out.dtype == TM700_DTYPE_STR || out.dtype == TM700_DTYPE_TEXT) {
+			out.s = response.substr(10, len);
+
+		} else {
+			// This should never happen
+			Tango::Except::throw_exception(
+						(const char *)"Bad data type",
+						(const char *)"Bad data type. This indicates a bug in the application. Report to developer.",
+						(const char *)"TM700Monitor::parse_response()");
+		}
+
+	// Catch only std::stoi exceptions
+	} catch(std::invalid_argument &) {
 		Tango::Except::throw_exception(
-					(const char *)"Bad data type",
-					(const char *)"Bad data type. This indicates a bug in the application. Report to developer.",
+					(const char *)"Controller error",
+					(const char *)"Conversion of string to number failed because of wrong input",
+					(const char *)"TM700Monitor::parse_response()");
+	} catch(std::out_of_range&) {
+		Tango::Except::throw_exception(
+					(const char *)"Controller error",
+					(const char *)"Conversion of string to number failed because of out-of-range error",
 					(const char *)"TM700Monitor::parse_response()");
 	}
 }
@@ -1434,6 +1449,9 @@ void *TM700Monitor::run_undetached(void *arg) {
 	TM700_param par;
 	bool status[sizeof(status_params)/sizeof(uint16_t)];
 	std::vector<double> freq_log;
+
+	// Error counter
+	size_t error_count = 0;
 
 	while(!this->_terminate) {
 		// Starting timestamp
@@ -1494,7 +1512,7 @@ void *TM700Monitor::run_undetached(void *arg) {
 
 			// Update status
 			stringstream status_msg;
-			Tango::DevState state;
+			Tango::DevState state = Tango::STANDBY;
 			if(status[0] && status[1]) { // Pumping station on
 				if(status[2]) {
 					// Normal operation
@@ -1559,88 +1577,109 @@ void *TM700Monitor::run_undetached(void *arg) {
 			// Update status
 			_parent->set_state(state);
 			_parent->set_status(status_msg.str());
+			
+			// Reset error counter
+			error_count = 0;
 
 		} catch(Tango::DevFailed &e) {
 			// Handle error
+			error_count++;
+			if(error_count < 5) {
+				error_log_exception(_parent, "Failed to read pump status. Errors were: ", e);
+			} else {
+				_parent->set_state(Tango::FAULT);
+				_parent->set_status("Communication failed");
+			}
+
+		} catch(std::invalid_argument &) {
+			// std::stoi failed because of bad input
+			_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "std::stoi failed because of a bad input" << endl;
+
+		} catch(std::out_of_range&) {
+			// std::stoi failed because of out-of-range error
+			_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "std::stoi failed because of an out-of-range error" << endl;
 		}
 
-		// Read monitoring parameters
-		uint16_t par_n = params[param_counter];
 
-		try {
-			if(_parent->get_logger()->is_debug_enabled())
-				_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Reading parameter " << par_n << endl;
+		// Read monitoring parameters (only if error counter is zero)
+		if(error_count == 0) {
+			uint16_t par_n = params[param_counter];
 
-			// Read one parameter
-			par = readParam(par_n);
+			try {
+				if(_parent->get_logger()->is_debug_enabled())
+					_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Reading parameter " << par_n << endl;
 
-			// Increment counter and reset when needed
-			param_counter++;
-			if(param_counter >= sizeof(params)/sizeof(uint16_t)) {
-				param_counter = 0;
+				// Read one parameter
+				par = readParam(par_n);
+
+				// Increment counter and reset when needed
+				param_counter++;
+				if(param_counter >= sizeof(params)/sizeof(uint16_t)) {
+					param_counter = 0;
+				}
+
+				// Update monitoring parameters
+				switch(par_n) {
+					case TM700_PAR_CURR: // Current
+						if(std::abs(_current - par.f) > 0.05) {
+							_current = par.f;
+							*_ev_current = _current;
+							_parent->push_change_event("Current", _ev_current);
+						}
+						break;
+
+					case TM700_PAR_POWER: // Power
+						if(_power != par.i) {
+							_power = par.i;
+							*_ev_power = static_cast<float>(_power);
+							_parent->push_change_event("Power", _ev_power);
+						}
+						break;
+
+					case TM700_PAR_T_BEAR: // Bearing temperature
+						if(_bearing_t != par.i) {
+							_bearing_t = par.i;
+							*_ev_bt = _bearing_t;
+							_parent->push_change_event("BearingTemperature", _ev_bt);
+						}
+						break;
+
+					case TM700_PAR_T_POWER: // Converter temperature
+						if(_conv_t != par.i) {
+							_conv_t = par.i;
+							*_ev_ct = _conv_t;
+							_parent->push_change_event("ConverterTemperature", _ev_ct);
+						}
+						break;
+
+					case TM700_PAR_T_MOTOR: // Motor temperature
+						if(_motor_t != par.i) {
+							_motor_t = par.i;
+							*_ev_mt = _motor_t;
+							_parent->push_change_event("MotorTemperature", _ev_mt);
+						}
+						break;
+
+					case TM700_PAR_OPH_PUMP: // Operating hours
+						if(_op_hours != par.i) {
+							_op_hours = par.i;
+							*_ev_ophours = static_cast<float>(_op_hours);
+							_parent->push_change_event("BearingTemperature", _ev_bt);
+						}
+						break;
+
+					default: // Unhandled parameter
+						// Warning message
+						_parent->get_logger()->warn_stream() << log4tango::LogInitiator::_begin_log << "Read an unexpected parameter with number " << par_n;
+						break;
+				}
+
+			} catch(Tango::DevFailed &e) {
+				// Handle error
+				stringstream msg;
+				msg << "Failed to read monitoring parameter " << par_n << ". Errors were: ";
+				error_log_exception(_parent, msg.str().c_str(), e);
 			}
-
-			// Update monitoring parameters
-			switch(par_n) {
-				case TM700_PAR_CURR: // Current
-					if(std::abs(_current - par.f) > 0.05) {
-						_current = par.f;
-						*_ev_current = _current;
-						_parent->push_change_event("Current", _ev_current);
-					}
-					break;
-
-				case TM700_PAR_POWER: // Power
-					if(_power != par.i) {
-						_power = par.i;
-						*_ev_power = static_cast<float>(_power);
-						_parent->push_change_event("Power", _ev_power);
-					}
-					break;
-
-				case TM700_PAR_T_BEAR: // Bearing temperature
-					if(_bearing_t != par.i) {
-						_bearing_t = par.i;
-						*_ev_bt = _bearing_t;
-						_parent->push_change_event("BearingTemperature", _ev_bt);
-					}
-					break;
-
-				case TM700_PAR_T_POWER: // Converter temperature
-					if(_conv_t != par.i) {
-						_conv_t = par.i;
-						*_ev_ct = _conv_t;
-						_parent->push_change_event("ConverterTemperature", _ev_ct);
-					}
-					break;
-
-				case TM700_PAR_T_MOTOR: // Motor temperature
-					if(_motor_t != par.i) {
-						_motor_t = par.i;
-						*_ev_mt = _motor_t;
-						_parent->push_change_event("MotorTemperature", _ev_mt);
-					}
-					break;
-
-				case TM700_PAR_OPH_PUMP: // Operating hours
-					if(_op_hours != par.i) {
-						_op_hours = par.i;
-						*_ev_ophours = static_cast<float>(_op_hours);
-						_parent->push_change_event("BearingTemperature", _ev_bt);
-					}
-					break;
-
-				default: // Unhandled parameter
-					// Warning message
-					_parent->get_logger()->warn_stream() << log4tango::LogInitiator::_begin_log << "Read an unexpected parameter with number " << par_n;
-					break;
-			}
-
-		} catch(Tango::DevFailed &e) {
-			// Handle error
-			stringstream msg;
-			msg << "Failed to read monitoring parameter " << par_n << ". Errors were: ";
-			error_log_exception(_parent, msg.str().c_str(), e);
 		}
 
 		// End timestamp and elapsed time
