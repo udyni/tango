@@ -50,8 +50,7 @@ OUTPUT_TYPE = DEVICE
 #	- ./lib   if OUTPUT_TYPE is STATIC_LIB
 #	- ./bin for others
 #
-#OUTPUT_DIR =
-
+OUTPUT_DIR = ./bin/$(BIN_DIR)
 
 #=============================================================================
 # INC_DIR_USER is the list of all include path needed by your sources
@@ -136,7 +135,3 @@ SVC_INHERITANCE_OBJ =  \
 #	include common targets
 #
 include $(MAKE_ENV)/common_target.opt
-
-
-
-

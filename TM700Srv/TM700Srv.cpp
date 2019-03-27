@@ -1120,7 +1120,7 @@ TM700_param TM700Monitor::readParam(int param) {
 
 	{
 		// Send request to serial device
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		dout = _dev->command_inout("SendCommandWithResponse", din);
 	}
 
@@ -1245,7 +1245,7 @@ void TM700Monitor::writeParam(int param, const TM700_param& value) {
 
 	{
 		// Send request to serial device
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		dout = _dev->command_inout("SendCommandWithResponse", din);
 	}
 
