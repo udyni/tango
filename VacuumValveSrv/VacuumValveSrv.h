@@ -313,8 +313,8 @@ private:
 	// Parent device
 	VacuumValveSrv* _parent;
 
-	// Callback mutex (event handling must be serialized!)
-	omni_mutex _ev_lock;
+	// Initialization flag to ignore the first event after subscription
+	bool _init_done;
 
 	// Command GPIO proxy
 	Tango::AttributeProxy* _gpio_cmd;

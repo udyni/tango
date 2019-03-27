@@ -529,12 +529,12 @@ void WaterValveSrv::add_dynamic_commands()
 
 // Thread safe set_state
 void WaterValveSrv::safe_set_state(Tango::DevState state) {
-	omni_mutex_lock(this->_state_lock);
+	omni_mutex_lock sync(this->_state_lock);
 	set_state(state);
 }
 // Thread safe set_status
 void WaterValveSrv::safe_set_status(const string &new_status) {
-	omni_mutex_lock(this->_state_lock);
+	omni_mutex_lock sync(this->_state_lock);
 	set_status(new_status);
 }
 
@@ -548,6 +548,7 @@ ValveCallback::ValveCallback(WaterValveSrv* parent) :
 	_evid_chk(-1),
 	_evid_an(-1),
 	_moving(false),
+	_init_done(false),
 	_to_terminate(false),
 	_to_th(NULL),
 	_to_se(0),
@@ -556,7 +557,7 @@ ValveCallback::ValveCallback(WaterValveSrv* parent) :
 	_flow_conversion(1.0)
 {
 	// Lock the callback to be sure to end initialization before handling any event
-	omni_mutex_lock(this->_ev_lock);
+	//omni_mutex_lock sync(this->_ev_lock);
 
 	_analog_read = ::nan("");
 	char buffer[256];
@@ -578,17 +579,14 @@ ValveCallback::ValveCallback(WaterValveSrv* parent) :
 	_gpio_cmd = new Tango::AttributeProxy(buffer);
 	_val_cmd = readGPIOAttr(_gpio_cmd);
 	_val_cmd_w = _val_cmd.load();
-	_evid_cmd = _gpio_cmd->subscribe_event(Tango::CHANGE_EVENT, this);
 
 	// Relay check GPIO proxy
 	snprintf(buffer, 255, "%s/b%02d", _parent->gPIO_Device.c_str(), _parent->gPIO_Check);
 	_gpio_chk = new Tango::AttributeProxy(buffer);
 	_val_chk = readGPIOAttr(_gpio_chk);
-	_evid_chk = _gpio_chk->subscribe_event(Tango::CHANGE_EVENT, this);
 
 	// Analog reading proxy
 	_analogin = new Tango::AttributeProxy(_parent->analogIN);
-	_evid_an = _analogin->subscribe_event(Tango::CHANGE_EVENT, this);
 
 	if(_val_cmd && !_val_chk) {
 		_parent->safe_set_state(Tango::OPEN);
@@ -604,9 +602,17 @@ ValveCallback::ValveCallback(WaterValveSrv* parent) :
 		_parent->safe_set_status(msg.str());
 	}
 
+	// Subscribe events
+	_evid_cmd = _gpio_cmd->subscribe_event(Tango::CHANGE_EVENT, this);
+	_evid_chk = _gpio_chk->subscribe_event(Tango::CHANGE_EVENT, this);
+	_evid_an = _analogin->subscribe_event(Tango::CHANGE_EVENT, this);
+
 	// Start timeout thread
 	_to_th = new omni_thread(ValveCallback::checkTimeout, static_cast<void*>(this));
 	_to_th->start();
+	
+	// Initialization done
+	_init_done = true;
 }
 
 
@@ -791,7 +797,7 @@ void ValveCallback::start_timeout_thread() {
 void ValveCallback::push_event(Tango::EventData* event) {
 	try {
 		// Lock
-		omni_mutex_lock(this->_ev_lock);
+		//omni_mutex_lock sync(this->_ev_lock);
 
 		// Check for errors
 		if(!event->err) {
@@ -838,7 +844,10 @@ void ValveCallback::push_event(Tango::EventData* event) {
 
 					} else {
 						// Spurious event (it will happen once when the device is started)
-						_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious command GPIO event (val: " << int(val) << ")" << endl;
+						if(_init_done)
+							_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious command GPIO event (val: " << int(val) << ")" << endl;
+						else if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Ignoring subscription GPIO event (val: " << int(val) << ")" << endl;
 					}
 				} else {
 					// Failed to parse value
@@ -870,7 +879,10 @@ void ValveCallback::push_event(Tango::EventData* event) {
 						}
 					} else {
 						// Spurious event (it will happen once when the device is started)
-						_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious check GPIO event (val: " << int(val) << ")" << endl;
+						if(_init_done)
+							_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious command GPIO event (val: " << int(val) << ")" << endl;
+						else if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Ignoring subscription GPIO event (val: " << int(val) << ")" << endl;
 					}
 
 				} else {
@@ -888,7 +900,7 @@ void ValveCallback::push_event(Tango::EventData* event) {
 				_analog_read = val;
 				// Propagate change event
 				*_analog_event = getWaterFlow();
-				_parent->push_change_event("Water", _analog_event);
+				_parent->push_change_event("WaterFlow", _analog_event);
 				*_analog_event_raw = getAnalogRead();
 				_parent->push_change_event("RawVoltage", _analog_event_raw);
 

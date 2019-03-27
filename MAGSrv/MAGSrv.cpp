@@ -782,7 +782,7 @@ uint16_t MagSerial::getIndexedValue(uint16_t param, uint16_t index) {
 	din << argin;
 	{
 		// Lock communication proxy
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		// Send message
 		dout = _dev->command_inout("SendTelegram", din);
 	}
@@ -937,7 +937,7 @@ void *MagSerial::run_undetached(void *arg) {
 				Tango::DeviceData dout;
 				{
 					// Lock mutex
-					omni_mutex_lock(this->_lock);
+					omni_mutex_lock sync(this->_lock);
 					dout = _dev->command_inout("SendTelegram", din);
 				}
 				comm_err_count = 0;

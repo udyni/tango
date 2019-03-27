@@ -569,7 +569,7 @@ bool GPIOMonitor::readGPIO(size_t id) {
 			(const char *)"Index out of range",
 			(const char *)"GPIO pin index out of range. Should be between 0 and 15.",
 			(const char *)"GPIOMonitor::readGPIO()");
-	omni_mutex_lock(this->_lock);
+	omni_mutex_lock sync(this->_lock);
 	return _values[id];
 }
 
@@ -583,7 +583,7 @@ void GPIOMonitor::writeGPIO(size_t id, bool val) {
 			(const char *)"GPIOMonitor::writeGPIO()");
 
 	try {
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		_dev->writeGPIO(id, val);
 
 	} catch(MCPException &e) {
@@ -607,7 +607,7 @@ bool GPIOMonitor::getPolarity(size_t id) {
 			(const char *)"GPIOMonitor::getPolarity()");
 
 	try {
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		return _dev->getPolarity(id);
 
 	} catch(MCPException &e) {
@@ -631,7 +631,7 @@ void GPIOMonitor::setPolarity(size_t id, bool inverted) {
 			(const char *)"GPIOMonitor::setPolarity()");
 
 	try {
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		_dev->setPolarity(id, inverted);
 
 	} catch(MCPException &e) {
@@ -655,7 +655,7 @@ bool GPIOMonitor::getDirection(size_t id) {
 			(const char *)"GPIOMonitor::getDirection()");
 
 	try {
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		return _dev->getDirection(id);
 
 	} catch(MCPException &e) {
@@ -679,7 +679,7 @@ void GPIOMonitor::setDirection(size_t id, bool input) {
 			(const char *)"GPIOMonitor::setDirection()");
 
 	try {
-		omni_mutex_lock(this->_lock);
+		omni_mutex_lock sync(this->_lock);
 		_dev->setDirection(id, input);
 
 	} catch(MCPException &e) {
@@ -704,7 +704,7 @@ void *GPIOMonitor::run_undetached(void* ptr) {
 		gettimeofday(&beg, NULL);
 
 		try {
-			omni_mutex_lock(this->_lock);
+			omni_mutex_lock sync(this->_lock);
 			a = _dev->getRegister(MCP23017_GPIOA);
 			b = _dev->getRegister(MCP23017_GPIOB);
 

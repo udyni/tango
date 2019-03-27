@@ -541,12 +541,12 @@ void VacuumValveSrv::add_dynamic_commands()
 
 // Thread safe set_state
 void VacuumValveSrv::safe_set_state(Tango::DevState state) {
-	omni_mutex_lock(this->_state_lock);
+	omni_mutex_lock sync(this->_state_lock);
 	set_state(state);
 }
 // Thread safe set_status
 void VacuumValveSrv::safe_set_status(const string &new_status) {
-	omni_mutex_lock(this->_state_lock);
+	omni_mutex_lock sync(this->_state_lock);
 	set_status(new_status);
 }
 
@@ -564,14 +564,13 @@ ValveCallback::ValveCallback(VacuumValveSrv* parent) :
 	_evid_cls(-1),
 	_evid_an(-1),
 	_moving(false),
+	_init_done(false),
 	_to_terminate(false),
 	_to_th(NULL),
 	_to_se(0),
 	_analog_event(NULL),
 	_analog_event_raw(NULL)
 {
-	// Lock the callback to be sure to end initialization before handling any event
-	omni_mutex_lock(this->_ev_lock);
 
 	_analog_read = ::nan("");
 	char buffer[256];
@@ -592,25 +591,21 @@ ValveCallback::ValveCallback(VacuumValveSrv* parent) :
 	_gpio_cmd = new Tango::AttributeProxy(buffer);
 	_val_cmd = readGPIOAttr(_gpio_cmd);
 	_val_cmd_w = _val_cmd.load();
-	_evid_cmd = _gpio_cmd->subscribe_event(Tango::CHANGE_EVENT, this);
 
 	// Relay check GPIO proxy
 	snprintf(buffer, 255, "%s/b%02d", _parent->gPIO_Device.c_str(), _parent->gPIO_Check);
 	_gpio_chk = new Tango::AttributeProxy(buffer);
 	_val_chk = readGPIOAttr(_gpio_chk);
-	_evid_chk = _gpio_chk->subscribe_event(Tango::CHANGE_EVENT, this);
 
 	// Valve open status GPIO proxy
 	snprintf(buffer, 255, "%s/b%02d", _parent->gPIO_Device.c_str(), _parent->gPIO_Open);
 	_gpio_opn = new Tango::AttributeProxy(buffer);
 	_val_opn = readGPIOAttr(_gpio_opn);
-	_evid_opn = _gpio_opn->subscribe_event(Tango::CHANGE_EVENT, this);
 
 	// Valve close status GPIO proxy
 	snprintf(buffer, 255, "%s/b%02d", _parent->gPIO_Device.c_str(), _parent->gPIO_Close);
 	_gpio_cls = new Tango::AttributeProxy(buffer);
 	_val_cls = readGPIOAttr(_gpio_cls);
-	_evid_cls = _gpio_cls->subscribe_event(Tango::CHANGE_EVENT, this);
 
 	// Analog reading proxy
 	_analogin = new Tango::AttributeProxy(_parent->analogIN);
@@ -630,9 +625,17 @@ ValveCallback::ValveCallback(VacuumValveSrv* parent) :
 		_parent->safe_set_status(msg.str());
 	}
 
+	// Subscribe events
+	_evid_cmd = _gpio_cmd->subscribe_event(Tango::CHANGE_EVENT, this);
+	_evid_chk = _gpio_chk->subscribe_event(Tango::CHANGE_EVENT, this);
+	_evid_opn = _gpio_opn->subscribe_event(Tango::CHANGE_EVENT, this);
+	_evid_cls = _gpio_cls->subscribe_event(Tango::CHANGE_EVENT, this);
+
 	// Start timeout thread
 	_to_th = new omni_thread(ValveCallback::checkTimeout, static_cast<void*>(this));
 	_to_th->start();
+
+	_init_done = true;
 }
 
 
@@ -828,8 +831,6 @@ void ValveCallback::start_timeout_thread() {
 // Event callback
 void ValveCallback::push_event(Tango::EventData* event) {
 	try {
-		// Lock
-		omni_mutex_lock(this->_ev_lock);
 
 		// Check for errors
 		if(!event->err) {
@@ -875,8 +876,11 @@ void ValveCallback::push_event(Tango::EventData* event) {
 						checkStatus();
 
 					} else {
-						// Spurious event (it will happen once when the device is started)
-						_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious command GPIO event (val: " << int(val) << ")" << endl;
+						// Spurious event (we ignore when it will happen once when the device is started)
+						if(_init_done)
+							_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious command GPIO event (val: " << int(val) << ")" << endl;
+						else if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Ignoring subscription GPIO event (val: " << int(val) << ")" << endl;
 					}
 				} else {
 					// Failed to parse value
@@ -908,7 +912,10 @@ void ValveCallback::push_event(Tango::EventData* event) {
 						}
 					} else {
 						// Spurious event (it will happen once when the device is started)
-						_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious check GPIO event (val: " << int(val) << ")" << endl;
+						if(_init_done)
+							_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious check GPIO event (val: " << int(val) << ")" << endl;
+						else if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Ignoring subscription GPIO event (val: " << int(val) << ")" << endl;
 					}
 
 				} else {
@@ -942,7 +949,10 @@ void ValveCallback::push_event(Tango::EventData* event) {
 
 					} else {
 						// Spurious event (it will happen once when the device is started)
-						_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious open status GPIO event (val: " << int(val) << ")" << endl;
+						if(_init_done)
+							_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious open status GPIO event (val: " << int(val) << ")" << endl;
+						else if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Ignoring subscription GPIO event (val: " << int(val) << ")" << endl;
 					}
 
 				} else {
@@ -976,7 +986,10 @@ void ValveCallback::push_event(Tango::EventData* event) {
 
 					} else {
 						// Spurious event (it will happen one when the device is started
-						_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious close status GPIO event (val: " << int(val) << ")" << endl;
+						if(_init_done)
+							_parent->get_logger()->info_stream() << log4tango::LogInitiator::_begin_log << "Got a spurious close status GPIO event (val: " << int(val) << ")" << endl;
+						else if(_parent->get_logger()->is_debug_enabled())
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Ignoring subscription GPIO event (val: " << int(val) << ")" << endl;
 					}
 
 				} else {
