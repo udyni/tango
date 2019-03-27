@@ -1402,7 +1402,7 @@ void ApogeeMon::initialize() {
 		else if(_roi_v_bin < 1) {
 			_roi_v_bin = 1;
 			att.set_write_value(_roi_v_bin);
-			_parent->get_logger()->warn_stream() << log4tango::LogInitiator::_begin_log << "Memorized value below the allowed minimum. Setting 'ROI_VBin' to minimum of 1" << _roi_v_bin << endl;
+			_parent->get_logger()->warn_stream() << log4tango::LogInitiator::_begin_log << "Memorized value below the allowed minimum. Setting 'ROI_VBin' to minimum of " << _roi_v_bin << endl;
 		}
 		else if(_parent->get_logger()->is_debug_enabled())
 			_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Restoring 'ROI_VBin' to " << _roi_v_bin << endl;
@@ -1459,6 +1459,8 @@ void ApogeeMon::initialize() {
 
 // Close camera
 void ApogeeMon::closeCamera() {
+	// Lock camera
+	omni_mutex_lock sync(this->_lock);
 	if(_cam) {
 		// Delete camera object (connection is closed automatically)
 		delete _cam;
@@ -1796,32 +1798,40 @@ void *ApogeeMon::run_undetached(void *arg) {
 				Apg::Status status;
 				{
 					// Get camera imaging status
-					omni_mutex_lock sync(this->_lock);
-					status = _cam->GetImagingStatus();
+					{
+						omni_mutex_lock sync(this->_lock);
+						status = _cam->GetImagingStatus();
+					}
 
 					// Update CCD temperature reading every 2 seconds
 					if(ELAPSED_TIME_MS(tt, s) > 10000) {
 
-						// Update measure time
-						gettimeofday(&tt, NULL);
+						double ccd_temp = 0.0;
+						double ccd_setpoint = 0.0;
+						bool cooler_on = false;
+						Apg::CoolerStatus cs;
+						{
+							omni_mutex_lock sync(this->_lock);
+							// Update measure time
+							gettimeofday(&tt, NULL);
+							ccd_temp = _cam->GetTempCcd();
+							ccd_setpoint = _cam->GetCoolerSetPoint();
+							cooler_on = _cam->IsCoolerOn();
+							cs = _cam->GetCoolerStatus();
+						}
 
-						double val;
-						val = _cam->GetTempCcd();
-						if(val != _cooling_temperature) {
-							_cooling_temperature = val;
+						if(ccd_temp != _cooling_temperature) {
+							_cooling_temperature = ccd_temp;
 							_parent->push_change_event("CoolingTemperature", &_cooling_temperature);
 						}
-						val = _cam->GetCoolerSetPoint();
-						if(val != _cooling_setpoint) {
-							_cooling_setpoint = val;
+						if(ccd_setpoint != _cooling_setpoint) {
+							_cooling_setpoint = ccd_setpoint;
 							_parent->push_change_event("CoolingSetpoint", &_cooling_setpoint);
 						}
-						val = _cam->IsCoolerOn();
-						if(val != _cooling_enable) {
-							_cooling_enable = val;
+						if(cooler_on != _cooling_enable) {
+							_cooling_enable = cooler_on;
 							_parent->push_change_event("CoolingEnable", &_cooling_enable);
 						}
-						Apg::CoolerStatus cs = _cam->GetCoolerStatus();
 						if(cs != _cooling_status) {
 							_cooling_status = cs;
 							{
@@ -1851,7 +1861,7 @@ void *ApogeeMon::run_undetached(void *arg) {
 
 					// Check command queue
 					if(!_queue.empty()) {
-						if(status == Apg::Status_Exposing || status == Apg::Status_ImagingActive) {
+						if(status == Apg::Status_Exposing || status == Apg::Status_ImagingActive || Apg::Status_ImageReady) {
 							omni_mutex_lock sync(this->_lock);
 							_cam->StopExposure(false);
 						}
@@ -2103,7 +2113,6 @@ void *ApogeeMon::run_undetached(void *arg) {
 					case Apg::ErrorType_Critical:
 						// Close camera and search again
 						try {
-							omni_mutex_lock sync(this->_lock);
 							closeCamera();
 							_devinfo = findCamera();
 							initialize();
