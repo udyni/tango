@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="ASCII"?>
+<pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
+  <classes name="MercurySrv" pogoRevision="9.4">
+    <description description="Tango device server for a Mercury C863 motion controller" title="Mercury C863 Server" sourcePath="/home/wyrdmeister/Documents/Work/SoftProjects/Udyni/Tango/MercurySrv" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="true" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
+      <inheritances classname="Device_Impl" sourcePath=""/>
+      <identification contact="at mail.polimi.it - michele.devetta" author="michele.devetta" emailDomain="mail.polimi.it" classFamily="Motion" siteSpecific="" platform="All Platforms" bus="Not Applicable" manufacturer="Physik Instrumente (PI) GmbH" reference="Mercury C863"/>
+    </description>
+    <deviceProperties name="Proxy" mandatory="true" description="Communication proxy for the mercury controller">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <deviceProperties name="Address" description="Controller address on the RS232 daisy chain (default to 1)">
+      <type xsi:type="pogoDsl:ShortType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>1</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Referenced" description="Decide wether the motion of the stage should be referenced or not. Default to `true`.">
+      <type xsi:type="pogoDsl:BooleanType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>true</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="TimeConversion" description="Conversion factor from position to time (Default to 2L / c in femtoseconds)">
+      <type xsi:type="pogoDsl:DoubleType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>6671.282</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="PollingPeriod" description="Polling thread period in ms">
+      <type xsi:type="pogoDsl:UIntType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>500</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="StageConfiguration" description="Stage configuration with the comma separated list pairs &lt;hex index>=&lt;value>">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </deviceProperties>
+    <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="none">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="Device state">
+        <type xsi:type="pogoDsl:StateType"/>
+      </argout>
+      <status abstract="true" inherited="true" concrete="true"/>
+    </commands>
+    <commands name="Status" description="This command gets the device status (stored in its device_status data member) and returns it to the caller." execMethod="dev_status" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="none">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="Device status">
+        <type xsi:type="pogoDsl:ConstStringType"/>
+      </argout>
+      <status abstract="true" inherited="true" concrete="true"/>
+    </commands>
+    <commands name="setHome" description="Set stage home to the current position" execMethod="set_home" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+      <excludedStates>INIT</excludedStates>
+      <excludedStates>FAULT</excludedStates>
+      <excludedStates>MOVING</excludedStates>
+    </commands>
+    <commands name="goHome" description="Go to home position" execMethod="go_home" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+      <excludedStates>INIT</excludedStates>
+      <excludedStates>FAULT</excludedStates>
+      <excludedStates>MOVING</excludedStates>
+    </commands>
+    <commands name="timeStep" description="Make a relative move in time" execMethod="time_step" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="Time step in fs">
+        <type xsi:type="pogoDsl:DoubleType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+      <excludedStates>INIT</excludedStates>
+      <excludedStates>FAULT</excludedStates>
+      <excludedStates>MOVING</excludedStates>
+    </commands>
+    <commands name="posStep" description="Make a relative move in position" execMethod="pos_step" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="Step in phys unit">
+        <type xsi:type="pogoDsl:DoubleType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+      <excludedStates>INIT</excludedStates>
+      <excludedStates>FAULT</excludedStates>
+      <excludedStates>MOVING</excludedStates>
+    </commands>
+    <commands name="Stop" description="Stop motion" execMethod="stop" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+      <excludedStates>INIT</excludedStates>
+      <excludedStates>FAULT</excludedStates>
+    </commands>
+    <commands name="Abort" description="Abort motion abruptly" execMethod="abort" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+      <excludedStates>INIT</excludedStates>
+      <excludedStates>FAULT</excludedStates>
+    </commands>
+    <commands name="Reset" description="Reset controller. Restore configuration from database and search again for reference (if needed)." execMethod="reset" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+      <excludedStates>INIT</excludedStates>
+      <excludedStates>MOVING</excludedStates>
+    </commands>
+    <commands name="StartMacro" description="Start the macro configured in the attribute Macro" execMethod="start_macro" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+    </commands>
+    <commands name="StopMacro" description="Start the macro configured in the attribute Macro" execMethod="stop_macro" displayLevel="OPERATOR" polledPeriod="0">
+      <argin description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argin>
+      <argout description="">
+        <type xsi:type="pogoDsl:VoidType"/>
+      </argout>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <excludedStates>DISABLE</excludedStates>
+    </commands>
+    <attributes name="Acceleration" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:FloatType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="Stage acceleration" label="Acceleration" unit="mm/s^2" standardUnit="mm/s^2" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+      <readExcludedStates>FAULT</readExcludedStates>
+      <writeExcludedStates>DISABLE</writeExcludedStates>
+      <writeExcludedStates>INIT</writeExcludedStates>
+      <writeExcludedStates>FAULT</writeExcludedStates>
+      <writeExcludedStates>MOVING</writeExcludedStates>
+    </attributes>
+    <attributes name="Velocity" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:FloatType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="Stage velocity" label="Velocity" unit="mm/s" standardUnit="mm/s" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+      <readExcludedStates>FAULT</readExcludedStates>
+      <writeExcludedStates>DISABLE</writeExcludedStates>
+      <writeExcludedStates>INIT</writeExcludedStates>
+      <writeExcludedStates>FAULT</writeExcludedStates>
+      <writeExcludedStates>MOVING</writeExcludedStates>
+    </attributes>
+    <attributes name="RawPosition" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:DoubleType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="Raw position" unit="mm" standardUnit="mm" displayUnit="mm" format="%.3f" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+      <readExcludedStates>FAULT</readExcludedStates>
+      <writeExcludedStates>DISABLE</writeExcludedStates>
+      <writeExcludedStates>INIT</writeExcludedStates>
+      <writeExcludedStates>FAULT</writeExcludedStates>
+      <writeExcludedStates>MOVING</writeExcludedStates>
+    </attributes>
+    <attributes name="Position" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:DoubleType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="Position" unit="mm" standardUnit="mm" displayUnit="mm" format="%.3f" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+      <readExcludedStates>FAULT</readExcludedStates>
+      <writeExcludedStates>DISABLE</writeExcludedStates>
+      <writeExcludedStates>INIT</writeExcludedStates>
+      <writeExcludedStates>FAULT</writeExcludedStates>
+      <writeExcludedStates>MOVING</writeExcludedStates>
+    </attributes>
+    <attributes name="Time" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:DoubleType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="Time in femtoseconds (for 2 way pass)" label="Time" unit="fs" standardUnit="fs" displayUnit="fs" format="%.1f" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+      <readExcludedStates>FAULT</readExcludedStates>
+      <writeExcludedStates>DISABLE</writeExcludedStates>
+      <writeExcludedStates>INIT</writeExcludedStates>
+      <writeExcludedStates>FAULT</writeExcludedStates>
+      <writeExcludedStates>MOVING</writeExcludedStates>
+    </attributes>
+    <attributes name="HomePosition" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:DoubleType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="Home position" unit="mm" standardUnit="mm" displayUnit="mm" format="%.3f" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+    </attributes>
+    <attributes name="StageName" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="false" isDynamic="false">
+      <dataType xsi:type="pogoDsl:StringType"/>
+      <changeEvent fire="false" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+    </attributes>
+    <attributes name="LastError" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:IntType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="Store the last error got from the controller" label="Last error" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <readExcludedStates>DISABLE</readExcludedStates>
+    </attributes>
+    <attributes name="MotionDone" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:BooleanType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="Motion Done" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+    </attributes>
+    <attributes name="Macro" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" memorizedAtInit="true" allocReadMember="false" isDynamic="false">
+      <dataType xsi:type="pogoDsl:StringType"/>
+      <changeEvent fire="false" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="Macro" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+    </attributes>
+    <states name="DISABLE" description="Device disabled. Configuration/controller mismatch.">
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </states>
+    <states name="INIT" description="Initialization in progress">
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </states>
+    <states name="FAULT" description="Communication failure">
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </states>
+    <states name="MOVING" description="Motion in progress.">
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </states>
+    <states name="STANDBY" description="Ready.">
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+    </states>
+    <preferences docHome="./doc_html" makefileHome="$(TANGO_HOME)"/>
+  </classes>
+</pogoDsl:PogoSystem>

@@ -1,0 +1,59 @@
+Name;0x3C;60;M-110.1DG;M-112.1DG;M-405.CG;M-406.2DG;M-406.4DG;M-406.6DG;M-410.CG;M-415.CG
+P-Term;0x01;1;140;140;150;250;250;250;150;150
+I-Term;0x02;2;180;180;240;40;40;40;240;240
+D-Term;0x03;3;120;120;120;800;800;800;120;120
+I-Limit;0x04;4;2000;2000;2000;2000;2000;2000;2000;2000
+Kvff ;0x05;5;0;0;0;0;0;0;0;0
+Max. pos. error;0x08;8;0.0137329;0.0137329;0.00706425;0.02;0.02;0.02;0.00706425;0.00706425
+Maximum motor output;0x09;9;32767;32767;32767;32767;32767;32767;32767;32767
+Max. allowed vel.;0x0A;10;1.0;1.5;1.0;1.0;1.0;1.0;1.0;1.0
+Current acc.;0x0B;11;5;5;5;30;30;30;5;5
+Current dec.;0x0C;12;5;5;5;30;30;30;5;5
+Cts/unit num.;0x0E;14;1310720;1310720;7077888;9604000;9604000;9604000;7077888;7077888
+Cts/unit denom.;0x0F;15;9;9;25;81;81;81;25;25
+Is Rotary Stage;0x13;19;0;0;0;0;0;0;0;0
+Has Reference;0x14;20;0;0;1;1;1;1;1;1
+Maximum of Travel Range;0x15;21;5;25;25;25;50;75;50;75
+Value At Reference;0x16;22;2.5;12.5;0;0;0;0;0;0
+Dist. Ref. N-Limit;0x17;23;2.5;12.5;25;25;50;75;50;75
+Axis limit mode;0x18;24;0;0;0;0;0;0;0;0
+Stage has brakes;0x1A;26;0;0;0;0;0;0;0;0
+Dist. Ref. P-Limit;0x2F;47;2.5;12.5;25;25;50;75;50;75
+Minimum of Travel Range;0x30;48;0;0;-25;-25;-50;-75;-50;-75
+Invert reference;0x31;49;0;0;1;0;0;0;1;1
+Stage has lim.sw.;0x32;50;0;0;0;0;0;0;0;0
+Negative Motor Offset;0x33;51;0;0;0;0;0;0;0;0
+Positive Motor Offset;0x34;52;0;0;0;0;0;0;0;0
+Settling Window (encoder counts) ;0x36;54;0;0;0;0;0;0;0;0
+Settle Time;0x3F;63;0;0;0;0;0;0;0;0
+Initial direction of reference motion;0x47;71;0;0;0;0;0;0;0;0
+Drive Motor Offset;0x48;72;0;0;0;0;0;0;0;0
+Current vel.;0x49;73;0.9;0.9;0.9;0.9;0.9;0.9;0.9;0.9
+Max. allowed acc.;0x4A;74;10;10;10;30;30;30;10;10
+Max. allowed dec.;0x4B;75;10;10;10;30;30;30;10;10
+Servo Window mode;0x4D;77;0;0;0;0;0;0;0;0
+Vel. for ref. motion;0x50;80;0.1;0.1;0.1;0.1;0.1;0.1;0.1;0.1
+Servo loop input factor num.;0x5A;90;10000;10000;10000;10000;10000;10000;10000;10000
+Servo loop input factor denom.;0x5B;91;1;1;1;1;1;1;1;1
+Source Of Reference Signal;0x5C;92;0;0;0;0;0;0;0;0
+Source Of Negative Limit Signal;0x5D;93;0;0;0;0;0;0;0;0
+Source Of Positive Limit Signal;0x5E;94;0;0;0;0;0;0;0;0
+Invert Digital Input Used For Negative Limit;0x5F;95;0;0;0;0;0;0;0;0
+Invert Digital Input Used For Positive Limit;0x60;96;0;0;0;0;0;0;0;0
+Invert Direction Of Motion For Joystick-Controlled Axis?;0x61;97;0;0;0;0;0;0;0;0
+Dist. from L.S. to Hardstop;0x63;99;0.2;0.2;0.2;0.2;0.2;0.2;0.2;0.2
+Reference Signal Type;0x70;112;0;0;0;0;0;0;0;0
+D-Term Delay;0x71;113;8;8;8;8;8;8;8;8
+Ignore Macro Error?;0x72;114;0;0;0;0;0;0;0;0
+Use Limit Switches Only For Referencing;0x77;119;0;0;0;0;0;0;0;0
+Distance From Limit To Start Of Ref Search (Phys. Unit) ;0x78;120;0;0;0;0;0;0;0;0
+Distance For Reference Search (Phys. Unit) ;0x79;121;0;0;0;0;0;0;0;0
+Notch filter frequency;0x94;148;10000;10000;10000;0;0;0;10000;10000
+Notch filter edge;0x95;149;1;1;1;0;0;0;1;1
+Axis unit;0x7000601;117442049;mm;mm;mm;mm;mm;mm;mm;mm
+C862  P-Term;0x80000001;2147483649;140;140;320;250;250;250;320;320
+C862  I-Term;0x80000002;2147483650;180;180;30;40;40;40;30;30
+C862  D-Term;0x80000003;2147483651;120;120;300;800;800;800;300;300
+C862  I-Limit;0x80000004;2147483652;2000;2000;2000;2000;2000;2000;2000;2000
+C862 Velocity;0x80000005;2147483653;145635;218453;210000;118568;118568;118568;210000;210000
+C862 Acceleration;0x80000006;2147483654;1456355;1456355;900000;900000;900000;900000;900000;900000
