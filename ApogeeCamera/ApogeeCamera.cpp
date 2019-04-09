@@ -41,7 +41,7 @@
 
 /**
  *  ApogeeCamera class description:
- *    
+ *
  */
 
 //================================================================
@@ -173,11 +173,11 @@ void ApogeeCamera::init_device()
 	set_state(Tango::INIT);
 
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::init_device_before
-	
+
 
 	//	Get the device properties from database
 	get_device_property();
-	
+
 	attr_ADC_Gain_read = new Tango::DevUShort[1];
 	attr_ADC_Offset_read = new Tango::DevUShort[1];
 	attr_CoolingDrive_read = new Tango::DevDouble[1];
@@ -237,7 +237,7 @@ void ApogeeCamera::get_device_property()
 		//	Call database and extract values
 		if (Tango::Util::instance()->_UseDb==true)
 			get_db_device()->get_property(dev_prop);
-	
+
 		//	get instance on ApogeeCameraClass to get class property
 		Tango::DbDatum	def_prop, cl_prop;
 		ApogeeCameraClass	*ds_class =
@@ -314,7 +314,7 @@ void ApogeeCamera::write_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 //--------------------------------------------------------
 /**
  *	Read attribute ADC_Gain related method
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevUShort
  *	Attr type:	Scalar
@@ -335,7 +335,7 @@ void ApogeeCamera::read_ADC_Gain(Tango::Attribute &attr)
 //--------------------------------------------------------
 /**
  *	Write attribute ADC_Gain related method
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevUShort
  *	Attr type:	Scalar
@@ -364,7 +364,7 @@ void ApogeeCamera::write_ADC_Gain(Tango::WAttribute &attr)
 //--------------------------------------------------------
 /**
  *	Read attribute ADC_Offset related method
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevUShort
  *	Attr type:	Scalar
@@ -385,7 +385,7 @@ void ApogeeCamera::read_ADC_Offset(Tango::Attribute &attr)
 //--------------------------------------------------------
 /**
  *	Write attribute ADC_Offset related method
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevUShort
  *	Attr type:	Scalar
@@ -533,7 +533,7 @@ void ApogeeCamera::write_CoolingSetpoint(Tango::WAttribute &attr)
 //--------------------------------------------------------
 /**
  *	Read attribute CoolingStatus related method
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevState
  *	Attr type:	Scalar
@@ -585,9 +585,9 @@ void ApogeeCamera::read_EnableFastReadout(Tango::Attribute &attr)
 {
 	DEBUG_STREAM << "ApogeeCamera::read_EnableFastReadout(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(ApogeeCamera::read_EnableFastReadout) ENABLED START -----*/
-	
+
 	*attr_EnableFastReadout_read = dev->getFastReadoutState();
-	
+
 	//	Set the attribute value
 	attr.set_value(attr_EnableFastReadout_read);
 
@@ -1035,7 +1035,7 @@ void ApogeeCamera::stop_acquisition()
 {
 	DEBUG_STREAM << "ApogeeCamera::StopAcquisition()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(ApogeeCamera::stop_acquisition) ENABLED START -----*/
-	
+
 	try {
 		dev->StopAcquisition();
 	} catch(std::runtime_error &e) {
@@ -1044,7 +1044,7 @@ void ApogeeCamera::stop_acquisition()
 					e.what(),
 					(const char*)"ApogeeCamera::StartAcquisition()");
 	}
-	
+
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::stop_acquisition
 }
 //--------------------------------------------------------
@@ -1201,7 +1201,7 @@ std::vector<DeviceInfo> FindDeviceUsbEx::Find()
 
 
 // ApogeeMon constructor. Initialize communication with the camera
-ApogeeMon::ApogeeMon(ApogeeCamera *parent) : 
+ApogeeMon::ApogeeMon(ApogeeCamera *parent) :
 	_cam(NULL),
 	_terminate(false),
 	_parent(parent),  // Store parent pointer
@@ -1213,21 +1213,22 @@ ApogeeMon::ApogeeMon(ApogeeCamera *parent) :
 	_cooling_drive(0.0),
 	_min_exposure(0.0),
 	_max_exposure(0.0),
-	_roi_v_bin(0),
+	_roi_v_bin(1),
 	_roi_v_size(0),
 	_roi_v_start(0),
-	_roi_h_bin(0),
+	_roi_h_bin(1),
 	_roi_h_size(0),
 	_roi_h_start(0),
 	_max_pixel_h(0),
 	_max_pixel_v(0),
-	_max_bin_h(0),
-	_max_bin_v(0),
+	_max_bin_h(1),
+	_max_bin_v(1),
 	_adc_gain(0),
 	_adc_offset(0),
 	_exposure(0.0),
 	_acq_continuous(false),
-	_start_newacq(false)
+	_start_newacq(false),
+	_firmware(0)
 {
 	// Start monitoring thread
 	start_undetached();
@@ -1261,7 +1262,7 @@ DeviceInfo ApogeeMon::findCamera() {
 void ApogeeMon::initialize() {
 	// Lock camera
 	omni_mutex_lock sync(this->_lock);
-	
+
 	// Check if a camera already exists (should never happen, it indicates a bug in the program)
 	if(_cam) {
 		throw std::runtime_error("Camera is already initialized!");
@@ -1281,6 +1282,9 @@ void ApogeeMon::initialize() {
 	// Init successfull. Store camera object
 	if(_parent->get_logger()->is_debug_enabled())
 		_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Initialized camera with address " << _devinfo.address << ". Model is " << _cam->GetModel() << " (Sensor: " << _cam->GetSensor() << ", Firmware: " << _cam->GetFirmwareRev() << ", S/N: " << _cam->GetSerialNumber() << ")" << endl;
+
+	// Store camera firmware
+	_firmware = _cam->GetFirmwareRev();
 
 	// Pipeline download should be enabled or the camera will hang in ImagingActive state
 	_cam->SetPipelineDownload(true);
@@ -1344,12 +1348,10 @@ void ApogeeMon::initialize() {
 	// Get ROI max values
 	_max_pixel_h = _cam->GetMaxImgCols();
 	_max_pixel_v = _cam->GetMaxImgRows();
-	_max_bin_h = _cam->GetMaxBinCols();
-	_max_bin_v = _cam->GetMaxBinRows();
-	
-	// WORKAROUND: start row and col must be 1. Default is zero but gives a completely corrpted image (at least on firmware 108).
-	_cam->SetRoiStartRow(1);
-	_cam->SetRoiStartCol(1);
+	_max_bin_h = 10; // _cam->GetMaxBinCols(); NOTE: hardware binning is not working. We revert to software binning
+	_max_bin_v = 10; // _cam->GetMaxBinRows();
+	_cam->SetRoiBinCol(1);
+	_cam->SetRoiBinRow(1);
 
 	{
 		// Roi H binning
@@ -1367,7 +1369,7 @@ void ApogeeMon::initialize() {
 		}
 		else if(_parent->get_logger()->is_debug_enabled())
 			_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Restoring 'ROI_HBin' to " << _roi_h_bin << endl;
-		_cam->SetRoiBinCol(_roi_h_bin);
+		//_cam->SetRoiBinCol(_roi_h_bin); NOTE: hardware binning disabled
 	}
 	{
 		// Roi H size
@@ -1386,6 +1388,11 @@ void ApogeeMon::initialize() {
 		// Roi H start
 		Tango::WAttribute& att = attrs->get_w_attr_by_name("ROI_HStart");
 		att.get_write_value(_roi_h_start);
+		// WORKAROUND for firmware 108: start row and col must be 1. Default is zero but gives a completely corrpted image
+		if(_roi_h_start < 1 && _firmware <= 108) {
+			_roi_h_start = 1;
+			att.set_write_value(_roi_h_start);
+		}
 		if(_parent->get_logger()->is_debug_enabled())
 			_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Restoring 'ROI_HStart' to " << _roi_h_start << endl;
 		_cam->SetRoiStartCol(_roi_h_start);
@@ -1406,7 +1413,7 @@ void ApogeeMon::initialize() {
 		}
 		else if(_parent->get_logger()->is_debug_enabled())
 			_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Restoring 'ROI_VBin' to " << _roi_v_bin << endl;
-		_cam->SetRoiBinRow(_roi_v_bin);
+		//_cam->SetRoiBinRow(_roi_v_bin); NOTE: hardware binning disabled
 	}
 	{
 		// Roi V size
@@ -1544,6 +1551,8 @@ void ApogeeMon::setRoiHBin(uint16_t bin) {
 }
 
 void ApogeeMon::setRoiHSize(uint16_t pixel) {
+	// Take into account software binning
+	pixel *= _roi_h_bin;
 	// Check if camera exists
 	if(!_cam)
 		throw std::runtime_error("No camera initialized");
@@ -1554,7 +1563,7 @@ void ApogeeMon::setRoiHSize(uint16_t pixel) {
 	// Check maximum size
 	if(pixel > _max_pixel_h) {
 		std::stringstream msg;
-		msg << "Maximum size is " << _max_pixel_h;
+		msg << "Maximum size is " << (_max_pixel_h / _roi_h_bin);
 		throw std::runtime_error(msg.str());
 	}
 	// Submit to queue
@@ -1564,18 +1573,20 @@ void ApogeeMon::setRoiHSize(uint16_t pixel) {
 }
 
 void ApogeeMon::setRoiHStart(uint16_t pixel) {
+	// Take into account software binning
+	pixel *= _roi_h_bin;
 	// Check if camera exists
 	if(!_cam)
 		throw std::runtime_error("No camera initialized");
 	if(_roi_h_start == pixel)
 		return;
 	// If firmware is 108 minimum start column is 1
-	if(_devinfo.firmware <= 108 && pixel < 1)
+	if(_firmware <= 108 && pixel < 1)
 		throw std::runtime_error("Minimum horizontal start pixel in 1 with firmware up to version 108");
 	// Check maximum start
 	if(pixel > _max_pixel_h-1) {
 		std::stringstream msg;
-		msg << "Maximum start pixel is " << (_max_pixel_h-1);
+		msg << "Maximum start pixel is " << (_max_pixel_h / _roi_h_bin);
 		throw std::runtime_error(msg.str());
 	}
 	// Submit to queue
@@ -1606,6 +1617,8 @@ void ApogeeMon::setRoiVBin(uint16_t bin) {
 }
 
 void ApogeeMon::setRoiVSize(uint16_t pixel) {
+	// Take into account software binning
+	pixel *= _roi_v_bin;
 	// Check if camera exists
 	if(!_cam)
 		throw std::runtime_error("No camera initialized");
@@ -1616,7 +1629,7 @@ void ApogeeMon::setRoiVSize(uint16_t pixel) {
 	// Check maximum size
 	if(pixel > _max_pixel_v) {
 		std::stringstream msg;
-		msg << "Maximum size is " << _max_pixel_v;
+		msg << "Maximum size is " << (_max_pixel_v / _roi_v_bin);
 		throw std::runtime_error(msg.str());
 	}
 	// Submit to queue
@@ -1626,6 +1639,8 @@ void ApogeeMon::setRoiVSize(uint16_t pixel) {
 }
 
 void ApogeeMon::setRoiVStart(uint16_t pixel) {
+	// Take into account software binning
+	pixel *= _roi_v_bin;
 	// Check if camera exists
 	if(!_cam)
 		throw std::runtime_error("No camera initialized");
@@ -1634,7 +1649,7 @@ void ApogeeMon::setRoiVStart(uint16_t pixel) {
 	// Check maximum start
 	if(pixel > _max_pixel_v) {
 		std::stringstream msg;
-		msg << "Maximum start pixel is " << _max_pixel_v;
+		msg << "Maximum start pixel is " << (_max_pixel_v / _roi_v_bin);
 		throw std::runtime_error(msg.str());
 	}
 	// Submit to queue
@@ -1669,7 +1684,7 @@ void ApogeeMon::setADCoffset(uint16_t offset) {
 
 	if(offset == _adc_offset)
 		return;
-	
+
 	if(offset > 511)
 		throw std::runtime_error("Offset exceeding maximum value");
 
@@ -1768,7 +1783,7 @@ void *ApogeeMon::run_undetached(void *arg) {
 
 		// Initialize
 		initialize();
-		
+
 		// Init done
 		_parent->set_state(Tango::STANDBY);
 
@@ -1783,15 +1798,15 @@ void *ApogeeMon::run_undetached(void *arg) {
 	struct timeval tt;
 	gettimeofday(&tt, NULL);
 	struct timespec sl;
-	
+
 	size_t _retry = 0;
 
 	while(!_terminate) {
 
 		// Start of polling cycle
 		gettimeofday(&s, NULL);
-		
-		
+
+
 		if(_parent->get_state() != Tango::FAULT) {
 
 			try {
@@ -1881,17 +1896,23 @@ void *ApogeeMon::run_undetached(void *arg) {
 									_parent->push_change_event("IntegrationTime", &_exposure);
 									break;
 								case APG_HBIN:
-									try {
-										omni_mutex_lock sync(this->_lock);
-										_cam->SetRoiBinCol(cmd.getUShort());
-									} catch(std::runtime_error &e) {
-										_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "Failed to set horizontal binning. Error: " << e.what() << endl;
-										if(getErrorCode(e.what()) < Apg::ErrorType_Configuration)
-											throw;
-										break;
-									}
+									// NOTE: hardware binning disabled
+// 									try {
+// 										omni_mutex_lock sync(this->_lock);
+// 										_cam->SetRoiBinCol(cmd.getUShort());
+// 									} catch(std::runtime_error &e) {
+// 										_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "Failed to set horizontal binning. Error: " << e.what() << endl;
+// 										if(getErrorCode(e.what()) < Apg::ErrorType_Configuration)
+// 											throw;
+// 										break;
+// 									}
 									_roi_h_bin = cmd.getUShort();
-									_parent->push_change_event("ROI_HBin", &_roi_h_bin);
+									*(_parent->attr_ROI_HBin_read) = _roi_h_bin;
+									_parent->push_change_event("ROI_HBin", _parent->attr_ROI_HBin_read);
+									*(_parent->attr_ROI_HSize_read) = _roi_h_size / _roi_h_bin;
+									_parent->push_change_event("ROI_HSize", _parent->attr_ROI_HSize_read);
+									*(_parent->attr_ROI_HStart_read) = _roi_h_start / _roi_h_bin;
+									_parent->push_change_event("ROI_HStart", _parent->attr_ROI_HStart_read);
 									break;
 								case APG_HSIZE:
 									try {
@@ -1904,7 +1925,8 @@ void *ApogeeMon::run_undetached(void *arg) {
 										break;
 									}
 									_roi_h_size = cmd.getUShort();
-									_parent->push_change_event("ROI_HSize", &_roi_h_size);
+									*(_parent->attr_ROI_HSize_read) = _roi_h_size / _roi_h_bin;
+									_parent->push_change_event("ROI_HSize", _parent->attr_ROI_HSize_read);
 									break;
 								case APG_HSTART:
 									try {
@@ -1917,20 +1939,27 @@ void *ApogeeMon::run_undetached(void *arg) {
 										break;
 									}
 									_roi_h_start = cmd.getUShort();
-									_parent->push_change_event("ROI_HStart", &_roi_h_start);
+									*(_parent->attr_ROI_HStart_read) = _roi_h_start / _roi_h_bin;
+									_parent->push_change_event("ROI_HStart", _parent->attr_ROI_HStart_read);
 									break;
 								case APG_VBIN:
-									try {
-										omni_mutex_lock sync(this->_lock);
-										_cam->SetRoiBinRow(cmd.getUShort());
-									} catch(std::runtime_error &e) {
-										_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "Failed to set vertical binning. Error: " << e.what() << endl;
-										if(getErrorCode(e.what()) < Apg::ErrorType_Configuration)
-											throw;
-										break;
-									}
+									// NOTE: hardware binning disabled
+// 									try {
+// 										omni_mutex_lock sync(this->_lock);
+// 										_cam->SetRoiBinRow(cmd.getUShort());
+// 									} catch(std::runtime_error &e) {
+// 										_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "Failed to set vertical binning. Error: " << e.what() << endl;
+// 										if(getErrorCode(e.what()) < Apg::ErrorType_Configuration)
+// 											throw;
+// 										break;
+// 									}
 									_roi_v_bin = cmd.getUShort();
-									_parent->push_change_event("ROI_VBin", &_roi_v_bin);
+									*(_parent->attr_ROI_VBin_read) = _roi_v_bin;
+									_parent->push_change_event("ROI_VBin", _parent->attr_ROI_VBin_read);
+									*(_parent->attr_ROI_VSize_read) = _roi_v_size / _roi_v_bin;
+									_parent->push_change_event("ROI_VSize", _parent->attr_ROI_VSize_read);
+									*(_parent->attr_ROI_VStart_read) = _roi_v_start / _roi_v_bin;
+									_parent->push_change_event("ROI_VStart", _parent->attr_ROI_VStart_read);
 									break;
 								case APG_VSIZE:
 									try {
@@ -1943,7 +1972,8 @@ void *ApogeeMon::run_undetached(void *arg) {
 										break;
 									}
 									_roi_v_size = cmd.getUShort();
-									_parent->push_change_event("ROI_VSize", &_roi_v_size);
+									*(_parent->attr_ROI_VSize_read) = _roi_v_size / _roi_v_bin;
+									_parent->push_change_event("ROI_VSize", _parent->attr_ROI_VSize_read);
 									break;
 								case APG_VSTART:
 									try {
@@ -1956,7 +1986,8 @@ void *ApogeeMon::run_undetached(void *arg) {
 										break;
 									}
 									_roi_v_start = cmd.getUShort();
-									_parent->push_change_event("ROI_VStart", &_roi_v_start);
+									*(_parent->attr_ROI_VStart_read) = _roi_v_start / _roi_v_bin;
+									_parent->push_change_event("ROI_VStart", _parent->attr_ROI_VStart_read);
 									break;
 								case APG_READOUT:
 									try {
@@ -2039,9 +2070,13 @@ void *ApogeeMon::run_undetached(void *arg) {
 							_cam->GetImage(_image);
 						}
 						if(_parent->get_logger()->is_debug_enabled())
-							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Acquired a sequence of " << count << " images" << endl;
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Acquired a sequence of " << count << " images. Buffer size is: " << _image.size() << endl;
 						if(count > 0) {
 							size_t img_size = _image.size() / count;
+							if(_roi_h_bin > 1 || _roi_v_bin > 1) {
+								// In-place software binning
+								img_size = binImageInPlace(_image, _roi_v_size * count, _roi_v_bin, _roi_h_size, _roi_h_bin) / count;
+							}
 							size_t img_x = _roi_h_size / _roi_h_bin;
 							size_t img_y = _roi_v_size / _roi_v_bin;
 							if(img_size == img_x*img_y && img_x < 4096 && img_y < 4096) {
@@ -2053,7 +2088,7 @@ void *ApogeeMon::run_undetached(void *arg) {
 										memcpy((void*)_parent->attr_Image_read, (void*)(_image.data() + (i * img_size)), sizeof(uint16_t) * img_size);
 									}
 									// Fire change event
-									_parent->push_change_event("Image", _parent->attr_Image_read, _roi_h_size / _roi_h_bin, _roi_v_size / _roi_v_bin, false);
+									_parent->push_change_event("Image", _parent->attr_Image_read, img_x, img_y, false);
 								}
 							} else {
 								_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Failed to read image sequence. Image too big (size = " << img_size << ", x = " << img_x << ", y = " << img_y << ")" << endl;
@@ -2065,7 +2100,7 @@ void *ApogeeMon::run_undetached(void *arg) {
 					} else if(status == Apg::Status_Flushing) {
 						if(_parent->get_logger()->is_debug_enabled())
 							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Flushing camera" << endl;
-						
+
 						// Camera is idle. We can start another acquisition
 						if(_acq_continuous || _start_newacq) {
 							omni_mutex_lock sync(_lock);
@@ -2077,7 +2112,7 @@ void *ApogeeMon::run_undetached(void *arg) {
 						} else {
 							_parent->set_state(Tango::STANDBY);
 						}
-						
+
 					} else if(status == Apg::Status_WaitingOnTrigger) {
 						// TODO
 
@@ -2127,15 +2162,15 @@ void *ApogeeMon::run_undetached(void *arg) {
 						_retry = 0;
 						break;
 				}
-				
+
 			} catch(Tango::DevFailed &e) {
 				_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "Tango exception in polling loop: " << e.errors[0].desc << endl;
 			}
-			
+
 		} else {
 			// Fault state
 			msleep(5000);
-			
+
 			// Try to find the camera
 			try {
 				_devinfo = findCamera();
@@ -2165,6 +2200,39 @@ void *ApogeeMon::run_undetached(void *arg) {
 	*result = 0;
 	return result;
 }
+
+
+size_t ApogeeMon::binImageInPlace(std::vector<uint16_t> &image, uint16_t rows, uint16_t bin_r, uint16_t cols, uint16_t bin_c) {
+
+	uint16_t bin_sz_c = cols / bin_c;
+	uint16_t bin_sz_r = rows / bin_r;
+
+	MatrixProxy<uint16_t> img_in(image, rows, cols);
+	MatrixProxy<uint16_t> img_out(image, bin_sz_r, bin_sz_c);
+
+	if(_parent->get_logger()->is_debug_enabled())
+		_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Binning images down to " << bin_sz_r << " x " << bin_sz_c << endl;
+
+	for(size_t i = 0; i < bin_sz_r; i++) {
+		for(size_t j = 0; j < bin_sz_c; j++) {
+			uint32_t value = img_in[i*bin_r][j*bin_c];
+			for(size_t k = 0; k < bin_c; k++) {
+				for(size_t l = 0; l < bin_r; l++) {
+					if(k != 0 || l != 0) {
+						img_out[i][j] += img_in[i*bin_r+k][j*bin_c+l];
+					}
+				}
+			}
+			// Saturation control to avoid overflow
+			if(value > 65535)
+				img_out[i][j] = 65535;
+			else
+				img_out[i][j] = value & 0xFFFF;
+		}
+	}
+	return bin_sz_r*bin_sz_c;
+}
+
 
 
 // Millisecond sleep

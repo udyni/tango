@@ -34,8 +34,11 @@
 /*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ApogeeCameraStateMachine.cpp
 
 //================================================================
-//  States  |  Description
+//  States   |  Description
 //================================================================
+//  FAULT    |  
+//  ON       |  
+//  STANDBY  |  
 
 
 namespace ApogeeCamera_ns
@@ -52,15 +55,34 @@ namespace ApogeeCamera_ns
 //--------------------------------------------------------
 bool ApogeeCamera::is_ADC_Gain_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ADC_Gain attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ADC_GainStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ADC_GainStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ADC_GainStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ADC_Gain attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ADC_GainStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ADC_GainStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ADC_GainStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -72,15 +94,34 @@ bool ApogeeCamera::is_ADC_Gain_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_ADC_Offset_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ADC_Offset attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ADC_OffsetStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ADC_OffsetStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ADC_OffsetStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ADC_Offset attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ADC_OffsetStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ADC_OffsetStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ADC_OffsetStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -93,10 +134,19 @@ bool ApogeeCamera::is_ADC_Offset_allowed(TANGO_UNUSED(Tango::AttReqType type))
 bool ApogeeCamera::is_CoolingDrive_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for CoolingDrive attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::CoolingDriveStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::CoolingDriveStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::CoolingDriveStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -108,15 +158,34 @@ bool ApogeeCamera::is_CoolingDrive_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_CoolingEnable_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for CoolingEnable attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::CoolingEnableStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::CoolingEnableStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::CoolingEnableStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for CoolingEnable attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::CoolingEnableStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::CoolingEnableStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::CoolingEnableStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -128,15 +197,34 @@ bool ApogeeCamera::is_CoolingEnable_allowed(TANGO_UNUSED(Tango::AttReqType type)
 //--------------------------------------------------------
 bool ApogeeCamera::is_CoolingSetpoint_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for CoolingSetpoint attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::CoolingSetpointStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::CoolingSetpointStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::CoolingSetpointStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for CoolingSetpoint attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::CoolingSetpointStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::CoolingSetpointStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::CoolingSetpointStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -149,10 +237,19 @@ bool ApogeeCamera::is_CoolingSetpoint_allowed(TANGO_UNUSED(Tango::AttReqType typ
 bool ApogeeCamera::is_CoolingStatus_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for CoolingStatus attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::CoolingStatusStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::CoolingStatusStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::CoolingStatusStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -165,10 +262,19 @@ bool ApogeeCamera::is_CoolingStatus_allowed(TANGO_UNUSED(Tango::AttReqType type)
 bool ApogeeCamera::is_CoolingTemperature_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for CoolingTemperature attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::CoolingTemperatureStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::CoolingTemperatureStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::CoolingTemperatureStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -180,15 +286,34 @@ bool ApogeeCamera::is_CoolingTemperature_allowed(TANGO_UNUSED(Tango::AttReqType 
 //--------------------------------------------------------
 bool ApogeeCamera::is_EnableFastReadout_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for EnableFastReadout attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::EnableFastReadoutStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::EnableFastReadoutStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::EnableFastReadoutStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for EnableFastReadout attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::EnableFastReadoutStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::EnableFastReadoutStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::EnableFastReadoutStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -200,15 +325,34 @@ bool ApogeeCamera::is_EnableFastReadout_allowed(TANGO_UNUSED(Tango::AttReqType t
 //--------------------------------------------------------
 bool ApogeeCamera::is_IntegrationTime_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for IntegrationTime attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::IntegrationTimeStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::IntegrationTimeStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::IntegrationTimeStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for IntegrationTime attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::IntegrationTimeStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::IntegrationTimeStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::IntegrationTimeStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -220,15 +364,34 @@ bool ApogeeCamera::is_IntegrationTime_allowed(TANGO_UNUSED(Tango::AttReqType typ
 //--------------------------------------------------------
 bool ApogeeCamera::is_ROI_HBin_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ROI_HBin attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HBinStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HBinStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_HBinStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ROI_HBin attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HBinStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HBinStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_HBinStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -240,15 +403,34 @@ bool ApogeeCamera::is_ROI_HBin_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_ROI_HSize_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ROI_HSize attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HSizeStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HSizeStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_HSizeStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ROI_HSize attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HSizeStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HSizeStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_HSizeStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -260,15 +442,34 @@ bool ApogeeCamera::is_ROI_HSize_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_ROI_HStart_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ROI_HStart attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HStartStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HStartStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_HStartStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ROI_HStart attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HStartStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_HStartStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_HStartStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -280,15 +481,34 @@ bool ApogeeCamera::is_ROI_HStart_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_ROI_VBin_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ROI_VBin attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VBinStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VBinStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_VBinStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ROI_VBin attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VBinStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VBinStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_VBinStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -300,15 +520,34 @@ bool ApogeeCamera::is_ROI_VBin_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_ROI_VSize_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ROI_VSize attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VSizeStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VSizeStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_VSizeStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ROI_VSize attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VSizeStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VSizeStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_VSizeStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -320,15 +559,34 @@ bool ApogeeCamera::is_ROI_VSize_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_ROI_VStart_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
-	//	Not any excluded states for ROI_VStart attribute in Write access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VStartStateAllowed_WRITE) ENABLED START -----*/
+	//	Check access type.
+	if ( type!=Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for WRITE 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VStartStateAllowed_WRITE) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_VStartStateAllowed_WRITE
+			return false;
+		}
+		return true;
+	}
+	else
 
-	//	Not any excluded states for ROI_VStart attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VStartStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ROI_VStartStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ROI_VStartStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -341,10 +599,19 @@ bool ApogeeCamera::is_ROI_VStart_allowed(TANGO_UNUSED(Tango::AttReqType type))
 bool ApogeeCamera::is_Image_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for Image attribute in read access.
-	/*----- PROTECTED REGION ID(ApogeeCamera::ImageStateAllowed_READ) ENABLED START -----*/
+	//	Check access type.
+	if ( type==Tango::READ_REQ )
+	{
+		//	Compare device state with not allowed states for READ 
+		if (get_state()==Tango::FAULT)
+		{
+		/*----- PROTECTED REGION ID(ApogeeCamera::ImageStateAllowed_READ) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::ImageStateAllowed_READ
+			return false;
+		}
+		return true;
+	}
 	return true;
 }
 
@@ -361,10 +628,14 @@ bool ApogeeCamera::is_Image_allowed(TANGO_UNUSED(Tango::AttReqType type))
 //--------------------------------------------------------
 bool ApogeeCamera::is_StartAcquisition_allowed(TANGO_UNUSED(const CORBA::Any &any))
 {
-	//	Not any excluded states for StartAcquisition command.
+	//	Compare device state with not allowed states.
+	if (get_state()==Tango::FAULT)
+	{
 	/*----- PROTECTED REGION ID(ApogeeCamera::StartAcquisitionStateAllowed) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::StartAcquisitionStateAllowed
+		return false;
+	}
 	return true;
 }
 
@@ -376,10 +647,14 @@ bool ApogeeCamera::is_StartAcquisition_allowed(TANGO_UNUSED(const CORBA::Any &an
 //--------------------------------------------------------
 bool ApogeeCamera::is_StopAcquisition_allowed(TANGO_UNUSED(const CORBA::Any &any))
 {
-	//	Not any excluded states for StopAcquisition command.
+	//	Compare device state with not allowed states.
+	if (get_state()==Tango::FAULT)
+	{
 	/*----- PROTECTED REGION ID(ApogeeCamera::StopAcquisitionStateAllowed) ENABLED START -----*/
 	
 	/*----- PROTECTED REGION END -----*/	//	ApogeeCamera::StopAcquisitionStateAllowed
+		return false;
+	}
 	return true;
 }
 

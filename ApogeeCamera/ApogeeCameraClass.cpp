@@ -435,7 +435,7 @@ void ApogeeCameraClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	coolingdrive_prop.set_unit("%");
 	coolingdrive_prop.set_standard_unit("%");
 	coolingdrive_prop.set_display_unit("%");
-	coolingdrive_prop.set_format("%f");
+	coolingdrive_prop.set_format("%.1f");
 	//	max_value	not set for CoolingDrive
 	//	min_value	not set for CoolingDrive
 	//	max_alarm	not set for CoolingDrive

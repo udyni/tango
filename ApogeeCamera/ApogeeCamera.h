@@ -54,7 +54,7 @@
 
 /**
  *  ApogeeCamera class description:
- *    
+ *
  */
 
 namespace ApogeeCamera_ns
@@ -178,7 +178,7 @@ public:
 
 /**
  *	Attribute ADC_Gain related methods
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevUShort
  *	Attr type:	Scalar
@@ -188,7 +188,7 @@ public:
 	virtual bool is_ADC_Gain_allowed(Tango::AttReqType type);
 /**
  *	Attribute ADC_Offset related methods
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevUShort
  *	Attr type:	Scalar
@@ -227,7 +227,7 @@ public:
 	virtual bool is_CoolingSetpoint_allowed(Tango::AttReqType type);
 /**
  *	Attribute CoolingStatus related methods
- *	Description: 
+ *	Description:
  *
  *	Data type:	Tango::DevState
  *	Attr type:	Scalar
@@ -406,7 +406,7 @@ public:
 	ApgCommand getCommand()const { return _cmd; }
 	double getDouble()const { return _dval; }
 	uint16_t getUShort()const { return _ival; }
-	
+
 	friend ostream& operator<<(ostream& os, const CameraOperation& cmd) {
 		switch(cmd.getCommand()) {
 			case APG_EXPOSURE:
@@ -471,6 +471,29 @@ public:
 };
 
 
+
+// Class matrix access to buffer
+template<typename T>
+class MatrixProxy {
+public:
+	MatrixProxy(std::vector<T>& buffer, size_t rows, size_t cols) : _buffer(buffer), _rows(rows), _cols(cols) {}
+	class RowProxy {
+	public:
+		RowProxy(std::vector<T>& buffer, size_t i, size_t cols) : _buffer(buffer), _row_id(i), _cols(cols) {}
+		T& operator[](size_t j) { return _buffer[_row_id * _cols + j]; }
+	private:
+		std::vector<T>& _buffer;
+		size_t _row_id;
+		size_t _cols;
+	};
+	RowProxy operator[](size_t i) { return RowProxy(_buffer, i, _cols); }
+private:
+	std::vector<T>& _buffer;
+	size_t _rows;
+	size_t _cols;
+};
+
+
 class ApogeeMon : public omni_thread {
 public:
 	// Constructor
@@ -501,17 +524,17 @@ public:
 	// Horizontal ROI commands
 	uint16_t getRoiHBin()const { return _roi_h_bin; }
 	void setRoiHBin(uint16_t bin);
-	uint16_t getRoiHSize()const { return _roi_h_size; }
+	uint16_t getRoiHSize()const { return _roi_h_size / _roi_h_bin; }
 	void setRoiHSize(uint16_t pixel);
-	uint16_t getRoiHStart()const { return _roi_h_start; }
+	uint16_t getRoiHStart()const { return _roi_h_start / _roi_h_bin; }
 	void setRoiHStart(uint16_t pixel);
 
 	// Vertical ROI commands
 	uint16_t getRoiVBin()const { return _roi_v_bin; }
 	void setRoiVBin(uint16_t bin);
-	uint16_t getRoiVSize()const { return _roi_v_size; }
+	uint16_t getRoiVSize()const { return _roi_v_size / _roi_v_bin; }
 	void setRoiVSize(uint16_t pixel);
-	uint16_t getRoiVStart()const { return _roi_v_start; }
+	uint16_t getRoiVStart()const { return _roi_v_start / _roi_v_bin; }
 	void setRoiVStart(uint16_t pixel);
 
 	// ADC gain
@@ -545,6 +568,9 @@ public:
 	// Stop acquisition
 	void StopAcquisition();
 
+	// Bin image
+	size_t binImageInPlace(std::vector<uint16_t> &image, uint16_t x, uint16_t bin_x, uint16_t y, uint16_t bin_y);
+
 protected:
 	// Main acquisition loop
 	void *run_undetached(void *arg);
@@ -554,7 +580,7 @@ protected:
 
 	// Camera initialization function
 	void initialize();
-	
+
 	// Close camera
 	void closeCamera();
 
@@ -595,7 +621,7 @@ private:
 	uint16_t _roi_h_bin;
 	uint16_t _roi_h_size;
 	uint16_t _roi_h_start;
-	
+
 	// Min and max ROI values
 	uint16_t _max_pixel_h;
 	uint16_t _max_pixel_v;
@@ -608,15 +634,18 @@ private:
 
 	// Exposure time
 	double _exposure;
-	
+
 	// Continuous acquisition flag
 	bool _acq_continuous;
-	
+
 	// Flag to start a new acquisition
 	bool _start_newacq;
 
 	// Terminate flag
 	bool _terminate;
+
+	// Camera firmware
+	uint16_t _firmware;
 
 	// Last image
 	std::vector<uint16_t> _image;
