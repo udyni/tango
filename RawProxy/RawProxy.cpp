@@ -671,7 +671,6 @@ Tango::DevVarCharArray *RawProxy::sync_send_recv(const Tango::DevVarCharArray *a
 		} else {
 			// Copy the first byte
 			buffer.push_back(temp_buffer[0]);
-			temp_buffer[0];
 			memset(temp_buffer, 0, 1);
 
 			// If we get data, start a cycle of reads, with 5 ms timeout. Stop cycle when no more data is received

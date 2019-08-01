@@ -146,7 +146,6 @@ int CommSocket::recv_msg(std::string& buffer, const char* terminator, int timeou
 			return buffer.size();
 		}
 	}
-	return 0;
 }
 
 

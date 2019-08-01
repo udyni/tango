@@ -102,6 +102,28 @@ mcp23017::~mcp23017() {
 		::close(_fd);
 }
 
+// Copy constructor
+mcp23017::mcp23017(const mcp23017 &obj) {
+	_fd = dup(obj._fd);
+	if(_fd < 0) {
+		throw MCPException("Failed to duplicate i2c adapter handle (Error: %s)", strerror(errno));
+	}
+	_addr = obj._addr;
+}
+
+// Assignment operator
+mcp23017& mcp23017::operator= (const mcp23017 &obj) {
+	if(_fd != -1) {
+		::close(_fd);
+		_fd = -1;
+	}
+	_fd = ::dup(obj._fd);
+	if(_fd < 0) {
+		throw MCPException("Failed to duplicate i2c adapter handle (Error: %s)", strerror(errno));
+	}
+	_addr = obj._addr;
+}
+
 // Write register value
 void mcp23017::setRegister(uint8_t reg, uint8_t value) {
 	// Format I2C message

@@ -119,6 +119,12 @@ public:
 	// Destructor
 	~mcp23017();
 
+	// Copy constructor
+	mcp23017(const mcp23017 &obj);
+
+	// Assignment operator
+	mcp23017& operator= (const mcp23017 &obj);
+
 	/*
 	 * Control interface
 	 */
