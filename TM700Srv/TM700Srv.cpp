@@ -1519,13 +1519,13 @@ void *TM700Monitor::run_undetached(void *arg) {
 					state = Tango::RUNNING;
 					status_msg << "Normal operation";
 				} else {
+					state = Tango::MOVING;
 					if(fder > 0 || status[4]) {
 						// Pump is actively accelerating
 						status_msg << "Pump is accelerating.";
 					} else {
 						status_msg << "Pump hasn't reached normal operation but it's not accelerating.";
 					}
-					state = Tango::MOVING;
 				}
 
 			} else { // Pumping station off
@@ -1533,13 +1533,13 @@ void *TM700Monitor::run_undetached(void *arg) {
 					// Pump still rotating
 					if(fder < 0) {
 						// Pump is decelerating
+						state = Tango::MOVING;
 						status_msg << "Pump is decelerating.";
-						state << Tango::MOVING;
 
 					} else if(_freq > 50) {
 						// Pump is off but it's not decelerating...
+						state = Tango::MOVING;
 						status_msg << "Pump is off but it's not decelerating.";
-						state << Tango::MOVING;
 					}
 				} else {
 					// Pump is off
