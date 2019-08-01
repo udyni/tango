@@ -2497,10 +2497,11 @@ void *MercuryComm::run_undetached(void* ptr) {
 						_parent->set_status("Ready");
 						if(*(_parent->attr_MotionDone_read) == Tango::DevBoolean(0)) {
 							// Save position to database if the stage stopped on target
-							if(status % N_MERCURY_ONTG)
+							if(status & N_MERCURY_ONTG) {
 								savePosition(getPosition(true));
-							*(_parent->attr_MotionDone_read) = Tango::DevBoolean(1);
-							_parent->push_change_event("MotionDone", _parent->attr_MotionDone_read);
+								*(_parent->attr_MotionDone_read) = Tango::DevBoolean(1);
+								_parent->push_change_event("MotionDone", _parent->attr_MotionDone_read);
+							}
 						}
 					}
 
