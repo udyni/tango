@@ -369,7 +369,6 @@ void AnalogProxy::add_dynamic_attributes()
 	
 	/*----- PROTECTED REGION ID(AnalogProxy::add_dynamic_attributes) ENABLED START -----*/
 
-	size_t counter = 0;
 	for(size_t i = 0; i < dev->size(); i++) {
 		add_AnalogValue_dynamic_attribute(dev->getName(i));
 	}
@@ -456,7 +455,6 @@ AnalogPolling::~AnalogPolling() {
 
 // Get analog value
 double AnalogPolling::getValue(size_t id) {
-	omni_mutex_lock(this->_lock);
 	if(id < _values.size() && _fids[id] != -1)
 		return _values[id] * _conversion[id];
 	else
@@ -501,7 +499,7 @@ uint16_t AnalogPolling::readAnalog(size_t id) {
 		return 0;
 	}
 
-	omni_mutex_lock(this->_filelock);
+	omni_mutex_lock sync(this->_filelock);
 
 	size_t count = 0;
 	while(true) {
@@ -610,9 +608,6 @@ void* AnalogPolling::run_undetached(void* ptr) {
 						// Skip to next file
 						continue;
 					}
-
-					// Lock values
-					omni_mutex_lock(this->_lock);
 
 					// Check if we should fire an event
 					if(val != _values[i] && _ev_vals != NULL) {

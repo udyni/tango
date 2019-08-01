@@ -214,6 +214,10 @@ public:
 	// Destructor
 	~AnalogPolling();
 
+	// Copy constructor and assignment operator
+	AnalogPolling(const AnalogPolling&) =delete;
+	AnalogPolling& operator=(const AnalogPolling&) =delete;
+
 	// Size
 	size_t size()const { return _values.size(); }
 
@@ -264,9 +268,6 @@ private:
 
 	// Vector of conversion factors
 	std::vector<double> _conversion;
-
-	// Lock for value access
-	omni_mutex _lock;
 	
 	// Lock for file access
 	omni_mutex _filelock;
