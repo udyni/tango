@@ -58,6 +58,16 @@ CORBA::Any *resetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CO
     srv->config.m_Trigger.m_Source = 0,
     srv->config.m_Trigger.m_SourceType = 0;
 
+    // Stop retriggering thread if needed
+    if(srv->retrigger) {
+        int *ret = NULL;
+        srv->retrigger->terminate();
+        srv->retrigger->join((void**)&ret);
+        delete ret;
+        srv->retrigger = NULL;
+        srv->old_triggering = false;
+    }
+
     // Configure measurement
     retval = AVSerializer::AVS_PrepareMeasure(srv->handle, &(srv->config));
     if(retval) {
