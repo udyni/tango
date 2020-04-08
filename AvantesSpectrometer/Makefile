@@ -36,8 +36,8 @@ RELEASE      = Release_$(MAJOR_VERS)_$(MINOR_VERS)
 # # - DEBUG     : debug symbols - no optimization
 # # - OPTIMIZED : no debug symbols - optimization level set to O2
 # #-----------------------------------------------------------------------------
-RELEASE_TYPE = DEBUG
-#RELEASE_TYPE = OPTIMIZED
+#RELEASE_TYPE = DEBUG
+RELEASE_TYPE = OPTIMIZED
 
 #=============================================================================
 # OUTPUT_TYPE can be one of the following :

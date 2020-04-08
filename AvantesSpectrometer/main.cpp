@@ -27,11 +27,11 @@ int main(int argc,char *argv[])
     {
         cout << "Starting AvantesSpectrometer..." << endl;
 
-        // Initialise AvaSpec library
-        AvantesSpectrometer_ns::AVSerializer::instance();
-
         // Initialise the device server
         Tango::Util *tg = Tango::Util::init(argc, argv);
+
+        // Initialise AvaSpec library
+        AvantesSpectrometer_ns::AVSerializer::instance();
 
         // Create the device server singleton which will create everything
         tg->server_init(false);
