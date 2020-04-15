@@ -38,5 +38,9 @@ CORBA::Any *storeBackgroundClass::execute(Tango::DeviceImpl *device, TANGO_UNUSE
     return new CORBA::Any();
 }
 
+CORBA::Any *resetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any)) {
+    // Nothing to do...
+    return new CORBA::Any();
+}
 
 } // End of namespace

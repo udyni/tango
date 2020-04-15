@@ -453,6 +453,16 @@ void OOSpectrometerClass::attribute_factory(vector<Tango::Attr *> &att_list) {
     timeout->set_disp_level(Tango::OPERATOR);
     att_list.push_back(timeout);
 
+    // Attribute : enableNLCorrection
+    enableNLCorrectionAttrib *nlcorrection = new enableNLCorrectionAttrib();
+    Tango::UserDefaultAttrProp nlcorrection_prop;
+    nlcorrection_prop.set_description("Enable detector nonlinearity correction");
+    nlcorrection_prop.set_label("enableNLCorrection");
+    nlcorrection->set_default_properties(nlcorrection_prop);
+    nlcorrection->set_change_event(true, false);
+    nlcorrection->set_disp_level(Tango::OPERATOR);
+    att_list.push_back(nlcorrection);
+
     // Create a list of static attributes
     create_static_attribute_list(get_class_attr()->get_attr_list());
 }
@@ -468,6 +478,10 @@ void OOSpectrometerClass::command_factory() {
     // Command storeBackground
     storeBackgroundClass *pstoreBackgroundCmd = new storeBackgroundClass("storeBackground", Tango::DEV_VOID, Tango::DEV_VOID, "", "", Tango::OPERATOR);
     command_list.push_back(pstoreBackgroundCmd);
+
+    // Command reset
+    resetClass *presetCmd = new resetClass("reset", Tango::DEV_VOID, Tango::DEV_VOID, "", "", Tango::OPERATOR);
+    command_list.push_back(presetCmd);
 }
 
 //===================================================================

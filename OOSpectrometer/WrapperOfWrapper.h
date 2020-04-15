@@ -105,6 +105,12 @@ public:
     // Dark pixels indices
     std::vector<int> dark_indices;
 
+    // NL correction coefficients
+    std::vector<double> nl_coeff;
+
+    // NL correction status
+    bool nlc_enable;
+
     // TEC status
     bool tec_enable;
 
@@ -208,6 +214,10 @@ public:
     void setCorrectForElectricalDark(int id, bool enable);
     bool getCorrectForElectricalDark(int id)const;
 
+    // Enable/disable NL correction
+    void setNLCorrection(int id, bool enable);
+    bool getNLCorrection(int id)const;
+
     // Get number of pixels
     uint32_t getNumberOfPixels(int id);
 
@@ -260,6 +270,9 @@ protected:
 
     // Compute boxcar average of a spectrum (WARNING: the average is computed in place!)
     void compute_boxcar(double* spec, size_t len, uint8_t window);
+
+    // Compute pixel value corrected for detector nonlinearity
+    double correct_for_nonlinearity(double value, const std::vector<double>& coeff);
 
 private:
     // SeaBreeze API

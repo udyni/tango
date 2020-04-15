@@ -47,7 +47,7 @@ public:
 
     // Database instance
     Tango::Database* db;
-    
+
     // DB property names
     std::string prop_inttime;
     std::string prop_darksub;
@@ -76,6 +76,7 @@ public:
     Tango::DevBoolean *attr_enableElectricalDarkCorrection_read;
     Tango::DevULong   *attr_BoxcarWidth_read;
     Tango::DevBoolean *attr_enableBackgroundSubtraction_read;
+    Tango::DevBoolean *attr_enableNLCorrection_read;
     Tango::DevDouble  *attr_boardTemperature_read;
     Tango::DevBoolean *attr_enableTEC_read;
     Tango::DevDouble  *attr_TECSetpoint_read;
@@ -91,6 +92,7 @@ public:
     Tango::DevVarDoubleArray *spectrum; // Spectrum buffer
     omni_mutex* spectrum_lock; // Spectrum access lock
     bool updateBackground;
+    bool background_ok;
 
 //    Constructors and destructors
 public:

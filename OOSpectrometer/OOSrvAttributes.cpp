@@ -24,8 +24,9 @@ namespace OOSpectrometer_ns
 
 void IntegrationTimeAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_IntegrationTime_read) = float(WrapperOfWrapper::instance()->getIntegrationTime(srv->spec_id)) / 1000.0;
+        *(srv->attr_IntegrationTime_read) = float(wow->getIntegrationTime(srv->spec_id)) / 1000.0;
         att.set_value(srv->attr_IntegrationTime_read);
 
     } catch(WoWException &e) {
@@ -42,13 +43,24 @@ void IntegrationTimeAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void IntegrationTimeAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevFloat w_val;
         att.get_write_value(w_val);
         uint32_t time_micros = uint32_t(w_val * 1000.0);
-        WrapperOfWrapper::instance()->setIntegrationTime(srv->spec_id, time_micros);
+        if(wow->getIntegrationTime(srv->spec_id) == time_micros)
+            // Nothing to do
+            return
+        wow->setIntegrationTime(srv->spec_id, time_micros);
         *(srv->attr_IntegrationTime_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_IntegrationTime_read);
+
+        // Invalidate background
+        srv->background_ok = false;
+        if(*(srv->attr_enableBackgroundSubtraction_read)) {
+            *(srv->attr_enableBackgroundSubtraction_read) = false;
+            srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+        }
 
         // == Update DB ==
         Tango::DbData set_prop;
@@ -70,8 +82,9 @@ void IntegrationTimeAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
 
 void ScansToAverageAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_ScansToAverage_read) = WrapperOfWrapper::instance()->getScansToAverage(srv->spec_id);
+        *(srv->attr_ScansToAverage_read) = wow->getScansToAverage(srv->spec_id);
         att.set_value(srv->attr_ScansToAverage_read);
 
     } catch(WoWException &e) {
@@ -88,12 +101,23 @@ void ScansToAverageAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void ScansToAverageAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevULong w_val;
         att.get_write_value(w_val);
-        WrapperOfWrapper::instance()->setScansToAverage(srv->spec_id, w_val);
+        if(wow->getScansToAverage(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setScansToAverage(srv->spec_id, w_val);
         *(srv->attr_ScansToAverage_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_ScansToAverage_read);
+
+        // Invalidate background
+        srv->background_ok = false;
+        if(*(srv->attr_enableBackgroundSubtraction_read)) {
+            *(srv->attr_enableBackgroundSubtraction_read) = false;
+            srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+        }
 
     } catch(WoWException &e) {
         TangoSys_OMemStream msg;
@@ -109,8 +133,9 @@ void ScansToAverageAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) 
 
 void enableElectricalDarkCorrectionAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_enableElectricalDarkCorrection_read) = WrapperOfWrapper::instance()->getCorrectForElectricalDark(srv->spec_id);
+        *(srv->attr_enableElectricalDarkCorrection_read) = wow->getCorrectForElectricalDark(srv->spec_id);
         att.set_value(srv->attr_enableElectricalDarkCorrection_read);
 
     } catch(WoWException &e) {
@@ -127,12 +152,23 @@ void enableElectricalDarkCorrectionAttrib::read(Tango::DeviceImpl *dev,Tango::At
 
 void enableElectricalDarkCorrectionAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevBoolean w_val;
         att.get_write_value(w_val);
-        WrapperOfWrapper::instance()->setCorrectForElectricalDark(srv->spec_id, bool(w_val));
+        if(wow->getCorrectForElectricalDark(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setCorrectForElectricalDark(srv->spec_id, bool(w_val));
         *(srv->attr_enableElectricalDarkCorrection_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_enableElectricalDarkCorrection_read);
+
+        // Invalidate background
+        srv->background_ok = false;
+        if(*(srv->attr_enableBackgroundSubtraction_read)) {
+            *(srv->attr_enableBackgroundSubtraction_read) = false;
+            srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+        }
 
         // == Update DB ==
         Tango::DbData set_prop;
@@ -154,8 +190,9 @@ void enableElectricalDarkCorrectionAttrib::write(Tango::DeviceImpl *dev,Tango::W
 
 void BoxcarWidthAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_BoxcarWidth_read) = WrapperOfWrapper::instance()->getBoxcarWidth(srv->spec_id);
+        *(srv->attr_BoxcarWidth_read) = wow->getBoxcarWidth(srv->spec_id);
         att.set_value(srv->attr_BoxcarWidth_read);
 
     } catch(WoWException &e) {
@@ -172,12 +209,23 @@ void BoxcarWidthAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void BoxcarWidthAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevULong w_val;
         att.get_write_value(w_val);
-        WrapperOfWrapper::instance()->setBoxcarWidth(srv->spec_id, w_val);
+        if(wow->getBoxcarWidth(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setBoxcarWidth(srv->spec_id, w_val);
         *(srv->attr_BoxcarWidth_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_BoxcarWidth_read);
+
+        // Invalidate background
+        srv->background_ok = false;
+        if(*(srv->attr_enableBackgroundSubtraction_read)) {
+            *(srv->attr_enableBackgroundSubtraction_read) = false;
+            srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+        }
 
     } catch(WoWException &e) {
         TangoSys_OMemStream msg;
@@ -201,6 +249,12 @@ void enableBackgroundSubtractionAttrib::write(Tango::DeviceImpl *dev,Tango::WAtt
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
     Tango::DevBoolean w_val;
     att.get_write_value(w_val);
+    if(w_val && !(srv->background_ok)) {
+        Tango::Except::throw_exception(
+            (const char*)"Failed to enable",
+            (const char*)"You should acquire a background spectrum before enabling subtraction",
+            (const char*)"enableBackgroundSubtractionAttrib::write()");
+    }
     *(srv->attr_enableBackgroundSubtraction_read) = w_val;
     srv->push_change_event(att.get_name(), srv->attr_enableBackgroundSubtraction_read);
 }
@@ -236,8 +290,9 @@ void WavelengthAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void EnableTECAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_enableTEC_read) = WrapperOfWrapper::instance()->getTECEnable(srv->spec_id);
+        *(srv->attr_enableTEC_read) = wow->getTECEnable(srv->spec_id);
         att.set_value(srv->attr_enableTEC_read);
 
     } catch(WoWException &e) {
@@ -254,10 +309,14 @@ void EnableTECAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void EnableTECAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevBoolean w_val;
         att.get_write_value(w_val);
-        WrapperOfWrapper::instance()->setTECEnable(srv->spec_id, bool(w_val));
+        if(wow->getTECEnable(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setTECEnable(srv->spec_id, bool(w_val));
         *(srv->attr_enableTEC_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_enableTEC_read);
 
@@ -281,8 +340,9 @@ void EnableTECAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
 
 void TECSetPointAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_TECSetpoint_read) = WrapperOfWrapper::instance()->getTECSetpoint(srv->spec_id);
+        *(srv->attr_TECSetpoint_read) = wow->getTECSetpoint(srv->spec_id);
         att.set_value(srv->attr_TECSetpoint_read);
 
     } catch(WoWException &e) {
@@ -299,10 +359,14 @@ void TECSetPointAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void TECSetPointAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevDouble w_val;
         att.get_write_value(w_val);
-        WrapperOfWrapper::instance()->setTECSetpoint(srv->spec_id, w_val);
+        if(wow->getTECSetpoint(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setTECSetpoint(srv->spec_id, w_val);
         *(srv->attr_TECSetpoint_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_TECSetpoint_read);
 
@@ -326,8 +390,9 @@ void TECSetPointAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
 
 void TECTemperatureAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_TECTemperature_read) = WrapperOfWrapper::instance()->getTECTemperature(srv->spec_id);
+        *(srv->attr_TECTemperature_read) = wow->getTECTemperature(srv->spec_id);
         att.set_value(srv->attr_TECTemperature_read);
 
     } catch(WoWException &e) {
@@ -344,8 +409,9 @@ void TECTemperatureAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void BoardTemperatureAttrib::read(Tango::DeviceImpl *dev, Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_boardTemperature_read) = WrapperOfWrapper::instance()->getBoardTemperature(srv->spec_id);
+        *(srv->attr_boardTemperature_read) = wow->getBoardTemperature(srv->spec_id);
         att.set_value(srv->attr_boardTemperature_read);
 
     } catch(WoWException &e) {
@@ -380,8 +446,9 @@ void ModelAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void enableTriggerAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_enableTrigger_read) = WrapperOfWrapper::instance()->getEdgeTrigger(srv->spec_id);
+        *(srv->attr_enableTrigger_read) = wow->getEdgeTrigger(srv->spec_id);
         att.set_value(srv->attr_enableTrigger_read);
 
     } catch(WoWException &e) {
@@ -398,17 +465,21 @@ void enableTriggerAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void enableTriggerAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevBoolean w_val;
         att.get_write_value(w_val);
-        WrapperOfWrapper::instance()->setEdgeTrigger(srv->spec_id, w_val);
+        if(wow->getEdgeTrigger(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setEdgeTrigger(srv->spec_id, w_val);
         *(srv->attr_enableTrigger_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_enableTrigger_read);
 
         // DEBUG checks
         if(srv->get_logger()->is_debug_enabled()) {
             try {
-                srv->get_logger()->debug("The new trigger mode is: 0x%02X", WrapperOfWrapper::instance()->readFPGARegister(srv->spec_id, 0x2C));
+                srv->get_logger()->debug("The new trigger mode is: 0x%02X", wow->readFPGARegister(srv->spec_id, 0x2C));
             } catch(WoWException &e) {
                 srv->get_logger()->debug("Error: %s", e.what());
             }
@@ -428,8 +499,9 @@ void enableTriggerAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
 
 void TimeoutAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
-        *(srv->attr_timeout_read) = WrapperOfWrapper::instance()->getTimeout(srv->spec_id);
+        *(srv->attr_timeout_read) = wow->getTimeout(srv->spec_id);
         att.set_value(srv->attr_timeout_read);
 
     } catch(WoWException &e) {
@@ -446,10 +518,14 @@ void TimeoutAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 
 void TimeoutAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
     try {
         Tango::DevULong w_val;
         att.get_write_value(w_val);
-        WrapperOfWrapper::instance()->setTimeout(srv->spec_id, w_val);
+        if(wow->getTimeout(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setTimeout(srv->spec_id, w_val);
         *(srv->attr_timeout_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_timeout_read);
 
@@ -464,5 +540,55 @@ void TimeoutAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     }
 }
 
+
+void enableNLCorrectionAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
+    OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
+    try {
+        *(srv->attr_enableNLCorrection_read) = wow->getNLCorrection(srv->spec_id);
+        att.set_value(srv->attr_enableNLCorrection_read);
+
+    } catch(WoWException &e) {
+        TangoSys_OMemStream msg;
+        msg << "Failed to read NL correction status (Error: " << e.what() << ")";
+        srv->get_logger()->error(msg.str());
+        Tango::Except::throw_exception(
+            (const char*)"Attribute read failed",
+            msg.str(),
+            (const char*)"enableNLCorrectionAttrib::read()");
+    }
+}
+
+
+void enableNLCorrectionAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
+    OOSpectrometer *srv = static_cast<OOSpectrometer*>(dev);
+    WrapperOfWrapper *wow = WrapperOfWrapper::instance();
+    try {
+        Tango::DevBoolean w_val;
+        att.get_write_value(w_val);
+        if(wow->getNLCorrection(srv->spec_id) == w_val)
+            // Nothing to do
+            return;
+        wow->setNLCorrection(srv->spec_id, w_val);
+        *(srv->attr_enableNLCorrection_read) = w_val;
+        srv->push_change_event(att.get_name(), srv->attr_enableNLCorrection_read);
+
+        // Invalidate background
+        srv->background_ok = false;
+        if(*(srv->attr_enableBackgroundSubtraction_read)) {
+            *(srv->attr_enableBackgroundSubtraction_read) = false;
+            srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+        }
+
+    } catch(WoWException &e) {
+        TangoSys_OMemStream msg;
+        msg << "Failed to set NL correction status (Error: " << e.what() << ")";
+        srv->get_logger()->error(msg.str());
+        Tango::Except::throw_exception(
+            (const char*)"Attribute write failed",
+            msg.str(),
+            (const char*)"enableNLCorrectionAttrib::write()");
+    }
+}
 
 } // End of namespace

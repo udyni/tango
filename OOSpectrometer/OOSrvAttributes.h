@@ -208,5 +208,17 @@ public:
 };
 
 
+//    Attribute enableNLCorrection class definition
+class enableNLCorrectionAttrib: public Tango::Attr
+{
+public:
+    enableNLCorrectionAttrib() : Attr("enableNLCorrection", Tango::DEV_BOOLEAN, Tango::READ_WRITE) {};
+    ~enableNLCorrectionAttrib() {};
+    virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att);
+    virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att);
+    virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty) { return (dev->get_state() != Tango::FAULT); }
+};
+
+
 } // End of namespace
 #endif

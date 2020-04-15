@@ -33,7 +33,8 @@ DevParam::DevParam(long int _id, long int _spec_id, std::string _serial, uint32_
     dark_enable(false),
     tec_enable(false),
     tec_setpoint(0.0),
-    trigger_enable(false)
+    trigger_enable(false),
+    nlc_enable(false)
 {
     id = _id;
     spec_id = _spec_id;
@@ -476,6 +477,83 @@ void WrapperOfWrapper::subtract_dark(double* spec, size_t len, const std::vector
 }
 
 
+// Enable/disable NL correction
+bool WrapperOfWrapper::getNLCorrection(int id)const {
+    // Check ID
+    if(check_id(id)) {
+        return _dev_params[id].nlc_enable;
+
+    } else {
+        throw WoWException("WoW::getNLCorrection(): invalid ID");
+    }
+}
+
+
+void WrapperOfWrapper::setNLCorrection(int id, bool enable) {
+    // Check ID
+    if(check_id(id)) {
+        if(enable) {
+            if(_dev_params[id].nlc_enable)
+                // Nothing to do
+                return;
+            // Lock spectrometer
+            omni_mutex_lock access_lock(_dev_params[id].lock);
+            // Check for nonlinearity correction features
+            int err_code = 0;
+            int num_feat = sbapi->getNumberOfNonlinearityCoeffsFeatures(_dev_params[id].id, &err_code);
+            if(err_code) {
+                throw WoWException("WoW::setNLCorrection(): failed to get the number of NL correction features with error %d", err_code);
+            }
+            if(num_feat == 0) {
+                throw WoWException("WoW::setNLCorrection(): feature not supported");
+            }
+
+            // Get feature ID
+            long feat_id = 0;
+            sbapi->getNonlinearityCoeffsFeatures(_dev_params[id].id, &err_code, &feat_id, 1);
+            if(err_code) {
+                throw WoWException("WoW::setNLCorrection(): failed to get the feature ID with error %d", err_code);
+            }
+
+            // Get NL coefficients
+#define NL_MAX_COEFF 16
+            double coeffs[NL_MAX_COEFF];
+            memset((void*)coeffs, 0, sizeof(double) * NL_MAX_COEFF);
+            int n_coeff = sbapi->nonlinearityCoeffsGet(_dev_params[id].id, feat_id, &err_code, coeffs, NL_MAX_COEFF);
+            if(err_code) {
+                throw WoWException("WoW::setNLCorrection(): failed to get the NL correction coefficients with error %d", err_code);
+            }
+            // Copy coefficients
+            log_debug("Found %d NL coefficients\n", n_coeff);
+            {
+                omni_mutex_lock p_lock(*_param_lock);
+                for(int i = 0; i < n_coeff; i++) {
+                    log_debug("Coefficient %d: %e\n", i, coeffs[i]);
+                    _dev_params[id].nl_coeff.push_back(coeffs[i]);
+                }
+            }
+            _dev_params[id].nlc_enable = true;
+
+        } else {
+            omni_mutex_lock p_lock(*_param_lock);
+            _dev_params[id].nlc_enable = false;
+            _dev_params[id].nl_coeff.clear();
+        }
+
+    } else {
+        throw WoWException("WoW::setNLCorrection(): invalid ID");
+    }
+}
+
+
+double WrapperOfWrapper::correct_for_nonlinearity(double value, const std::vector<double>& coeff) {
+    double out = 0;
+    for(size_t i = 0; i < coeff.size(); i++)
+        out += coeff[i] * ::pow(value, i);
+    return out;
+}
+
+
 // Get number of pixels (including dark ones)
 uint32_t WrapperOfWrapper::getNumberOfPixels(int id) {
     // Check ID
@@ -566,6 +644,11 @@ void WrapperOfWrapper::getSpectrum(int id, double *data, size_t len) {
             }
         }
 
+        if(_dev_params[id].nlc_enable) {
+            for(size_t i = 0; i < len; i++)
+                data[i] *= correct_for_nonlinearity(data[i], _dev_params[id].nl_coeff);
+        }
+
         // Subtract electric dark if enabled
         if(_dev_params[id].dark_enable) {
             subtract_dark(data, len, &(_dev_params[id].dark_indices));
@@ -636,45 +719,50 @@ void WrapperOfWrapper::setEdgeTrigger(int id, bool enable) {
         // Lock spectrometer
         omni_mutex_lock access_lock(_dev_params[id].lock);
 
-        // Set trigger mode
-        bool use_fpga = false;
-        long fpga_id = 0;
         int err_code = 0;
-        char buffer[128];
-        sbapi->getDeviceType(_dev_params[id].id, &err_code, buffer, 127);
-        if(!err_code && strcmp(buffer, "USB4000") == 0) {
-            // Use FPGA register
-            // Check if we have a fpga register feature available
-            err_code = 0;
-            int num_fr = sbapi->getNumberOfFPGARegisterFeatures(_dev_params[id].id, &err_code);
-            if(num_fr == 0 || err_code != 0) {
-                // No firmware version available
-                log_warning("Device with ID %d is missing fpga register access (Error code: %d)", _dev_params[id].id, err_code);
 
-            } else {
-                // Get fpga register features IDs
-                err_code = 0;
-                sbapi->getFPGARegisterFeatures(_dev_params[id].id, &err_code, &fpga_id, 1);
-                if(err_code != 0) {
-                    log_error("Failed to get fpga register features from device with ID %d (Error code: %d)", _dev_params[id].id, err_code);
-                } else {
-                    use_fpga = true;
-                }
-            }
+        // First set trigger with USB command
+        sbapi->spectrometerSetTriggerMode(_dev_params[id].id, _dev_params[id].spec_id, &err_code, (enable) ? 3 : 0);
+        if(err_code) {
+            throw WoWException("WoW::setEdgeTrigger(): failed to set the trigger mode (Error: %d)", err_code);
         }
 
-        if(use_fpga) {
-            // Set fpga register
-            err_code = 0;
-            sbapi->FPGAWriteRegister(_dev_params[id].id, fpga_id, &err_code, 0x2C, (enable) ? 4 : 0);
-            if(err_code != 0) {
-                throw WoWException("WoW::setEdgeTrigger(): failed to set the trigger mode (Error: %d)", err_code);
-            }
+        // Check if this is a USB4000 spectrometer
+        if(enable) {
+            char buffer[128];
+            sbapi->getDeviceType(_dev_params[id].id, &err_code, buffer, 127);
+            if(!err_code && strcmp(buffer, "USB4000") == 0) {
+                // Check and set FPGA register
+                // Check if we have a fpga register feature available
+                err_code = 0;
+                int num_fr = sbapi->getNumberOfFPGARegisterFeatures(_dev_params[id].id, &err_code);
+                if(num_fr == 0 || err_code != 0) {
+                    // No firmware version available
+                    log_warning("Device with ID %d is missing fpga register access (Error code: %d)", _dev_params[id].id, err_code);
 
-        } else {
-            sbapi->spectrometerSetTriggerMode(_dev_params[id].id, _dev_params[id].spec_id, &err_code, (enable) ? 3 : 0);
-            if(err_code) {
-                throw WoWException("WoW::setEdgeTrigger(): failed to set the trigger mode (Error: %d)", err_code);
+                } else {
+                    // Get fpga register features IDs
+                    err_code = 0;
+                    long fpga_id = 0;
+                    sbapi->getFPGARegisterFeatures(_dev_params[id].id, &err_code, &fpga_id, 1);
+                    if(err_code != 0) {
+                        log_error("Failed to get fpga register features from device with ID %d (Error code: %d)", _dev_params[id].id, err_code);
+                    } else {
+                        err_code = 0;
+                        unsigned int reg = sbapi->FPGAReadRegister(_dev_params[id].id, fpga_id, &err_code, 0x2C);
+                        if(err_code) {
+                            log_error("Failed to get fpga register value of device with ID %d (Error code: %d)", _dev_params[id].id, err_code);
+                        } else {
+                            if(reg != 4) {
+                                err_code = 0;
+                                sbapi->FPGAWriteRegister(_dev_params[id].id, fpga_id, &err_code, 0x2C, 4);
+                                if(err_code) {
+                                    log_error("Failed to set fpga register of device with ID %d (Error code: %d)", _dev_params[id].id, err_code);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         _dev_params[id].trigger_enable = enable;

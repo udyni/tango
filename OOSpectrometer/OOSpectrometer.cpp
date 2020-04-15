@@ -1,7 +1,7 @@
 //=============================================================================
 //
 //  This file is part of OOSpectrometer.
-// 
+//
 //  Foobar is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
@@ -37,9 +37,13 @@ void OOSpectrometer::delete_device()
         acq = NULL;
     }
 
-    delete background;
-    delete wavelength;
-    delete spectrum;
+    if(background)
+        delete background;
+    if(wavelength)
+        delete wavelength;
+    if(spectrum)
+        delete spectrum;
+
     delete spectrum_lock;
 
     delete attr_IntegrationTime_read;
@@ -47,6 +51,7 @@ void OOSpectrometer::delete_device()
     delete attr_enableElectricalDarkCorrection_read;
     delete attr_BoxcarWidth_read;
     delete attr_enableBackgroundSubtraction_read;
+    delete attr_enableNLCorrection_read;
     delete attr_boardTemperature_read;
     delete attr_enableTEC_read;
     delete attr_TECSetpoint_read;
@@ -79,6 +84,7 @@ void OOSpectrometer::init_device()
     attr_enableElectricalDarkCorrection_read = new Tango::DevBoolean(false);
     attr_BoxcarWidth_read = new Tango::DevULong(0);
     attr_enableBackgroundSubtraction_read = new Tango::DevBoolean(false);
+    attr_enableNLCorrection_read = new Tango::DevBoolean(false);
     attr_boardTemperature_read = new Tango::DevDouble(0.0);
     attr_enableTEC_read = new Tango::DevBoolean(false);
     attr_TECSetpoint_read = new Tango::DevDouble(0.0);
@@ -91,6 +97,10 @@ void OOSpectrometer::init_device()
     firmwareVersion = new Tango::DevString();
     spectrometerModel = new Tango::DevString();
     spectrum_lock = new omni_mutex();
+    spectrum = NULL;
+    background = NULL;
+    wavelength = NULL;
+    background_ok = false;
 
     // Create property names
     stringstream propname;
@@ -328,6 +338,7 @@ void *SpecThread::run_undetached(void* arg) {
                 // Store spectrum as background
                 memcpy(_parent->background->get_buffer(), _parent->spectrum->get_buffer(), sizeof(Tango::DevDouble) * _parent->spectrum->length());
                 _parent->updateBackground = false;
+                _parent->background_ok = true;
                 continue;
             }
 

@@ -53,10 +53,10 @@ public:
 };
 
 //    Command getSpectrum class definition
-class getSpectrumClass : public Tango::Command
+class resetClass : public Tango::Command
 {
 public:
-    getSpectrumClass(
+    resetClass(
         const char        *name,
         Tango::CmdArgType in,
         Tango::CmdArgType out,
@@ -65,12 +65,12 @@ public:
         Tango::DispLevel  level)
     : Command(name, in, out, in_desc, out_desc, level) {};
 
-    getSpectrumClass(
+    resetClass(
         const char        *name,
         Tango::CmdArgType in,
         Tango::CmdArgType out)
     : Command(name, in, out) {};
-    ~getSpectrumClass() {};
+    ~resetClass() {};
 
     virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
     virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any) { return true; }

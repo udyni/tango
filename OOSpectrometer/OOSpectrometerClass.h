@@ -1,7 +1,7 @@
 //=============================================================================
 //
 //  This file is part of OOSpectrometer.
-// 
+//
 //  Foobar is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
@@ -43,7 +43,7 @@ public:
     Tango::DbData    cl_prop;
     Tango::DbData    cl_def_prop;
     Tango::DbData    dev_def_prop;
-    
+
     //    Method prototypes
     static OOSpectrometerClass *init(const char *);
     static OOSpectrometerClass *instance();
