@@ -35,7 +35,7 @@ class TangoImageHandler(pylon.ImageEventHandler):
             except Exception as e:
                 self.parent.error_stream("Pixel format not supported ({0:d}). Error: {1!s}".format(result.GetPixelType(), e))
         else:
-            self.parent.error_stream("Grab failed (Error[0:d]: {0})".format(result.GetErrorCode(), result.GetErrorDescription()))
+            self.parent.error_stream("Grab failed (Error[{0:d}]: {1!s})".format(result.GetErrorCode(), result.GetErrorDescription()))
         result.Release()
 
 
@@ -163,6 +163,7 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
             multi_prop.min_value = "{0:.1f}".format(self.camera.ExposureTimeAbs.GetMin())
             multi_prop.max_value = "{0:.1f}".format(self.camera.ExposureTimeAbs.GetMax())
             attribute.set_properties(multi_prop)
+            attribute.set_change_event(True, False)
 
             # Set minimum and maximum gain
             attribute = multi_attr.get_attr_by_name("Gain")
@@ -174,6 +175,11 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
                 multi_prop.min_value = "{0:.1f}".format(self.gc.raw2db(self.camera.GainRaw.GetMin(), self.camera.DeviceModelName()))
                 multi_prop.max_value = "{0:.1f}".format(self.gc.raw2db(self.camera.GainRaw.GetMax(), self.camera.DeviceModelName()))
             attribute.set_properties(multi_prop)
+            attribute.set_change_event(True, False)
+
+            # Enable change event on enable trigger
+            attribute = multi_attr.get_attr_by_name("EnableTrigger")
+            attribute.set_change_event(True, False)
 
             # Create TriggerSource attribute
             attr = PT.Attr("TriggerSource", PT.DevEnum, PT.AttrWriteType.READ_WRITE)
@@ -199,7 +205,7 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
 
             # Create auto-exposure attribute
             if "ExposureAuto" in dir(self.camera):
-                attr = PT.Attr("AutoExoposure", PT.DevEnum, PT.AttrWriteType.READ_WRITE)
+                attr = PT.Attr("AutoExposure", PT.DevEnum, PT.AttrWriteType.READ_WRITE)
                 attr_prop = PT.UserDefaultAttrProp()
                 attr_prop.label = "Auto exposure"
                 attr_prop.set_enum_labels(list(self.camera.ExposureAuto.GetSymbolics()))
@@ -213,6 +219,7 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
                 attr_prop.label = "Auto brightness target"
                 attr_prop.min_value = "{0:d}".format(self.camera.AutoTargetValue.GetMin())
                 attr_prop.max_value = "{0:d}".format(self.camera.AutoTargetValue.GetMax())
+                attr_prop.format = "%d"
                 attr.set_default_properties(attr_prop)
                 attr.set_memorized()
                 attr.set_memorized_init(True)
@@ -223,8 +230,10 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
                 attr = PT.Attr("AutoExposureLowerLimit", PT.DevDouble, PT.AttrWriteType.READ_WRITE)
                 attr_prop = PT.UserDefaultAttrProp()
                 attr_prop.label = "Auto exosure time lower limit"
-                attr_prop.min_value = "{0:d}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMin())
-                attr_prop.max_value = "{0:d}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMax())
+                attr_prop.min_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMin())
+                attr_prop.max_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMax())
+                attr_prop.format = "%.1f"
+                attr_prop.unit = "us"
                 attr.set_default_properties(attr_prop)
                 attr.set_memorized()
                 attr.set_memorized_init(True)
@@ -235,8 +244,10 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
                 attr = PT.Attr("AutoExposureUpperLimit", PT.DevDouble, PT.AttrWriteType.READ_WRITE)
                 attr_prop = PT.UserDefaultAttrProp()
                 attr_prop.label = "Auto exosure time lower limit"
-                attr_prop.min_value = "{0:d}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMin())
-                attr_prop.max_value = "{0:d}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMax())
+                attr_prop.min_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsUpperLimit.GetMin())
+                attr_prop.max_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsUpperLimit.GetMax())
+                attr_prop.format = "%.1f"
+                attr_prop.unit = "us"
                 attr.set_default_properties(attr_prop)
                 attr.set_memorized()
                 attr.set_memorized_init(True)
