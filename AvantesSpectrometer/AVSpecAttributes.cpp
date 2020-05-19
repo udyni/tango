@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of AvantesSpectrometer.
@@ -117,6 +118,13 @@ void IntegrationTimeAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
     *(srv->attr_IntegrationTime_read) = w_val;
     srv->push_change_event(att.get_name(), srv->attr_IntegrationTime_read);
 
+    // Invalidate background
+    srv->background_ok = false;
+    if(*(srv->attr_enableBackgroundSubtraction_read)) {
+        *(srv->attr_enableBackgroundSubtraction_read) = false;
+        srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+    }
+
     // == Update DB ==
     Tango::DbData set_prop;
     set_prop.push_back(Tango::DbDatum(srv->prop_inttime));
@@ -215,6 +223,13 @@ void ScansToAverageAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) 
     // Send change change event
     *(srv->attr_ScansToAverage_read) = w_val;
     srv->push_change_event(att.get_name(), srv->attr_ScansToAverage_read);
+
+    // Invalidate background
+    srv->background_ok = false;
+    if(*(srv->attr_enableBackgroundSubtraction_read)) {
+        *(srv->attr_enableBackgroundSubtraction_read) = false;
+        srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+    }
 }
 
 
@@ -308,6 +323,13 @@ void enableElectricalDarkCorrectionAttrib::write(Tango::DeviceImpl *dev,Tango::W
     // Send change change event
     *(srv->attr_enableElectricalDarkCorrection_read) = w_val;
     srv->push_change_event(att.get_name(), srv->attr_enableElectricalDarkCorrection_read);
+
+    // Invalidate background
+    srv->background_ok = false;
+    if(*(srv->attr_enableBackgroundSubtraction_read)) {
+        *(srv->attr_enableBackgroundSubtraction_read) = false;
+        srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+    }
 
     // == Update DB ==
     Tango::DbData set_prop;
@@ -408,6 +430,13 @@ void BoxcarWidthAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     // Send change change event
     *(srv->attr_BoxcarWidth_read) = w_val;
     srv->push_change_event(att.get_name(), srv->attr_BoxcarWidth_read);
+
+    // Invalidate background
+    srv->background_ok = false;
+    if(*(srv->attr_enableBackgroundSubtraction_read)) {
+        *(srv->attr_enableBackgroundSubtraction_read) = false;
+        srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+    }
 }
 
 
@@ -421,6 +450,12 @@ void enableBackgroundSubtractionAttrib::write(Tango::DeviceImpl *dev,Tango::WAtt
     AvantesSpectrometer *srv = static_cast<AvantesSpectrometer*>(dev);
     Tango::DevBoolean w_val;
     att.get_write_value(w_val);
+    if(w_val && !(srv->background_ok)) {
+         Tango::Except::throw_exception(
+            (const char*)"Failed to enable",
+            (const char*)"You should acquire a background spectrum before enabling subtraction",
+            (const char*)"enableBackgroundSubtractionAttrib::write()");
+    }
     *(srv->attr_enableBackgroundSubtraction_read) = w_val;
     srv->push_change_event(att.get_name(), srv->attr_enableBackgroundSubtraction_read);
 }
@@ -666,19 +701,19 @@ void TECSetPointAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
 void TECTemperatureAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
     AvantesSpectrometer *srv = static_cast<AvantesSpectrometer*>(dev);
     // Read analog value
-    float value = 0.0;
-    int retval = AVSerializer::AVS_GetAnalogIn(srv->handle, 0, &value);
-    if(retval) {
-        TangoSys_OMemStream msg;
-        msg << "Failed to read TEC temperature with error " << retval;
-        srv->get_logger()->error(msg.str());
-        srv->set_state(Tango::FAULT);
-        Tango::Except::throw_exception(
-            (const char*)"Attribute read failed",
-            msg.str(),
-            (const char*)"BoardTemperatureAttrib::read()");
-    }
-    *(srv->attr_TECTemperature_read) = srv->convert_analog_read(value, srv->dev_config.m_aTemperature[2].m_aFit, NR_TEMP_POL_COEF);
+//     float value = 0.0;
+//     int retval = AVSerializer::AVS_GetAnalogIn(srv->handle, 0, &value);
+//     if(retval) {
+//         TangoSys_OMemStream msg;
+//         msg << "Failed to read TEC temperature with error " << retval;
+//         srv->get_logger()->error(msg.str());
+//         srv->set_state(Tango::FAULT);
+//         Tango::Except::throw_exception(
+//             (const char*)"Attribute read failed",
+//             msg.str(),
+//             (const char*)"TECTemperatureAttrib::read()");
+//     }
+//     *(srv->attr_TECTemperature_read) = srv->convert_analog_read(value, srv->dev_config.m_aTemperature[2].m_aFit, NR_TEMP_POL_COEF);
     att.set_value(srv->attr_TECTemperature_read);
 }
 
@@ -686,19 +721,19 @@ void TECTemperatureAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
 void BoardTemperatureAttrib::read(Tango::DeviceImpl *dev, Tango::Attribute &att) {
     AvantesSpectrometer *srv = static_cast<AvantesSpectrometer*>(dev);
     // Read analog value
-    float value = 0.0;
-    int retval = AVSerializer::AVS_GetAnalogIn(srv->handle, 6, &value);
-    if(retval) {
-        TangoSys_OMemStream msg;
-        msg << "Failed to read board temperature with error " << retval;
-        srv->get_logger()->error(msg.str());
-        srv->set_state(Tango::FAULT);
-        Tango::Except::throw_exception(
-            (const char*)"Attribute read failed",
-            msg.str(),
-            (const char*)"BoardTemperatureAttrib::read()");
-    }
-    *(srv->attr_boardTemperature_read) = srv->convert_analog_read(value, srv->dev_config.m_aTemperature[0].m_aFit, NR_TEMP_POL_COEF);
+//     float value = 0.0;
+//     int retval = AVSerializer::AVS_GetAnalogIn(srv->handle, 6, &value);
+//     if(retval) {
+//         TangoSys_OMemStream msg;
+//         msg << "Failed to read board temperature with error " << retval;
+//         srv->get_logger()->error(msg.str());
+//         srv->set_state(Tango::FAULT);
+//         Tango::Except::throw_exception(
+//             (const char*)"Attribute read failed",
+//             msg.str(),
+//             (const char*)"BoardTemperatureAttrib::read()");
+//     }
+//     *(srv->attr_boardTemperature_read) = srv->convert_analog_read(value, srv->dev_config.m_aTemperature[0].m_aFit, NR_TEMP_POL_COEF);
     att.set_value(srv->attr_boardTemperature_read);
 }
 
@@ -839,5 +874,110 @@ void EnableTriggerAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
     srv->push_change_event(att.get_name(), srv->attr_enableTrigger_read);
 }
 
+
+void enableNLCorrectionAttrib::read(Tango::DeviceImpl *dev,Tango::Attribute &att) {
+    AvantesSpectrometer *srv = static_cast<AvantesSpectrometer*>(dev);
+    *(srv->attr_enableNLCorrection_read) = srv->dev_config.m_Detector.m_NLEnable;
+    att.set_value(srv->attr_enableNLCorrection_read);
+}
+
+
+void enableNLCorrectionAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att) {
+    AvantesSpectrometer *srv = static_cast<AvantesSpectrometer*>(dev);
+
+    struct timespec slp;
+    slp.tv_sec = 0;
+    slp.tv_nsec = 10000000;
+
+    // Get write value
+    Tango::DevBoolean w_val;
+    att.get_write_value(w_val);
+
+    // Check if we need to change something
+    if(w_val == srv->dev_config.m_Detector.m_NLEnable)
+        // No change
+        return;
+
+    int retval = 0;
+    retval = AVSerializer::AVS_StopMeasure(srv->handle);
+    if(retval) {
+        TangoSys_OMemStream msg;
+        msg << "Failed to stop measurement with error " << retval;
+        srv->get_logger()->error(msg.str());
+        srv->set_state(Tango::FAULT);
+        Tango::Except::throw_exception(
+            (const char*)"Failed to stop",
+            msg.str(),
+            (const char*)"enableNLCorrectionAttrib::write()");
+    }
+    nanosleep(&slp, NULL);
+
+    // Update TEC enable
+    Tango::DevBoolean old_val = srv->dev_config.m_Detector.m_NLEnable;
+    srv->dev_config.m_Detector.m_NLEnable = w_val;
+
+    // Set device parameters
+    retval = AVSerializer::AVS_SetParameter(srv->handle, &(srv->dev_config));
+    if(retval) {
+        // Configuration failed
+        TangoSys_OMemStream msg;
+        msg << "Device config failed with error " << retval;
+
+        // Bad parameter. Try to roll back the old value
+        srv->get_logger()->warn("Failed to set NL correction. Rolling back.");
+        srv->dev_config.m_Detector.m_NLEnable = old_val;
+
+        retval = AVSerializer::AVS_Measure(srv->handle, AvsDispatcher::spectrum_callback, (srv->old_triggering) ? 1 : -1);
+        if(retval) {
+            // Restart failed
+            srv->set_state(Tango::FAULT);
+            msg << ". Failed to restart measurement after rollback with error " << retval;
+        } else {
+            msg << ". Restarted with old value.";
+        }
+        srv->get_logger()->error(msg.str());
+        Tango::Except::throw_exception(
+                (const char*)"Failed to configure",
+                msg.str(),
+                (const char*)"enableNLCorrectionAttrib::write()");
+    }
+
+    // Configure measurement
+    retval = AVSerializer::AVS_PrepareMeasure(srv->handle, &(srv->config));
+    if(retval) {
+        TangoSys_OMemStream msg;
+        msg << "Failed to configure measurement with error " << retval;
+        srv->get_logger()->error(msg.str());
+        srv->set_state(Tango::FAULT);
+        Tango::Except::throw_exception(
+            (const char*)"Failed to configure",
+            msg.str(),
+            (const char*)"enableNLCorrectionAttrib::write()");
+    }
+
+    // Restart measurement
+    retval = AVSerializer::AVS_Measure(srv->handle, AvsDispatcher::spectrum_callback, -1);
+    if(retval) {
+        srv->set_state(Tango::FAULT);
+        TangoSys_OMemStream msg;
+        msg << "Failed to start measurement with error " << retval;
+        srv->get_logger()->error(msg.str());
+        Tango::Except::throw_exception(
+            (const char*)"Failed to start",
+            msg.str(),
+            (const char*)"enableNLCorrectionAttrib::write()");
+    }
+
+    // Send change change event
+    *(srv->attr_enableNLCorrection_read) = w_val;
+    srv->push_change_event(att.get_name(), srv->attr_enableNLCorrection_read);
+
+    // Invalidate background
+    srv->background_ok = false;
+    if(*(srv->attr_enableBackgroundSubtraction_read)) {
+        *(srv->attr_enableBackgroundSubtraction_read) = false;
+        srv->push_change_event("enableBackgroundSubtraction", srv->attr_enableBackgroundSubtraction_read);
+    }
+}
 
 } // End of namespace

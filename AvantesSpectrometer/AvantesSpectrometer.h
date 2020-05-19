@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of AvantesSpectrometer.
@@ -76,6 +77,7 @@ public:
     Tango::DevBoolean *attr_enableElectricalDarkCorrection_read;
     Tango::DevULong   *attr_BoxcarWidth_read;
     Tango::DevBoolean *attr_enableBackgroundSubtraction_read;
+    Tango::DevBoolean *attr_enableNLCorrection_read;
     Tango::DevDouble  *attr_boardTemperature_read;
     Tango::DevBoolean *attr_enableTEC_read;
     Tango::DevDouble  *attr_TECSetpoint_read;
@@ -90,6 +92,7 @@ public:
     Tango::DevVarDoubleArray* spectrum;   // Current spectrum
     omni_mutex* spectrum_lock;            // Spectrum access lock
     bool updateBackground;
+    bool background_ok;
 
 //    Constructors and destructors
 public:
@@ -136,6 +139,10 @@ public:
 
     // Convert analog read to temperature
     double convert_analog_read(float value, float* coeff, size_t ncoeff);
+
+    // Update analog attributes
+    // NOTE: workaround for a bug in libavs that prevents calling AVS_GetAnalogIn while acquiring spectra
+    void update_analog_attributes();
 };
 
 

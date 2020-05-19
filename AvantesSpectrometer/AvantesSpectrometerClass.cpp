@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of AvantesSpectrometer.
@@ -397,11 +398,11 @@ void AvantesSpectrometerClass::attribute_factory(vector<Tango::Attr *> &att_list
     btemp_prop.set_standard_unit("\xB0" "C");
     btemp_prop.set_display_unit("\xB0" "C");
     btemp_prop.set_format("%.1f");
-    btemp_prop.set_event_rel_change("0.5");
-	btemp_prop.set_event_abs_change("0.2");
+    btemp_prop.set_event_abs_change("0.2");
     btemp->set_default_properties(btemp_prop);
-    btemp->set_polling_period(3000);
-    btemp->set_change_event(true, true);
+//     btemp->set_polling_period(3000);
+//     btemp->set_change_event(true, true);
+    btemp->set_change_event(true, false);
     btemp->set_disp_level(Tango::OPERATOR);
     att_list.push_back(btemp);
 
@@ -461,6 +462,16 @@ void AvantesSpectrometerClass::attribute_factory(vector<Tango::Attr *> &att_list
     trigger->set_change_event(true, false);
     att_list.push_back(trigger);
 
+    // Attribute : enableNLCorrection
+    enableNLCorrectionAttrib *nlcorrection = new enableNLCorrectionAttrib();
+    Tango::UserDefaultAttrProp nlcorrection_prop;
+    nlcorrection_prop.set_description("Enable detector nonlinearity correction");
+    nlcorrection_prop.set_label("enableNLCorrection");
+    nlcorrection->set_default_properties(nlcorrection_prop);
+    nlcorrection->set_change_event(true, false);
+    nlcorrection->set_disp_level(Tango::OPERATOR);
+    att_list.push_back(nlcorrection);
+
     // Create a list of static attributes
     create_static_attribute_list(get_class_attr()->get_attr_list());
 }
@@ -480,6 +491,10 @@ void AvantesSpectrometerClass::command_factory() {
     // Command reset
     resetClass *presetCmd = new resetClass("reset", Tango::DEV_VOID, Tango::DEV_VOID, "", "", Tango::OPERATOR);
     command_list.push_back(presetCmd);
+
+    // Update temperature attributes
+    forceTemperatureUpdateClass *updateTempCmd = new forceTemperatureUpdateClass("forceTemperatureUpdate", Tango::DEV_VOID, Tango::DEV_VOID, "", "", Tango::OPERATOR);
+    command_list.push_back(updateTempCmd);
 }
 
 //===================================================================

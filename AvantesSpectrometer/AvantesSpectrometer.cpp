@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of AvantesSpectrometer.
@@ -67,6 +68,7 @@ void AvantesSpectrometer::delete_device()
     delete attr_enableElectricalDarkCorrection_read;
     delete attr_BoxcarWidth_read;
     delete attr_enableBackgroundSubtraction_read;
+    delete attr_enableNLCorrection_read;
     delete attr_boardTemperature_read;
     delete attr_enableTEC_read;
     delete attr_TECSetpoint_read;
@@ -103,6 +105,7 @@ void AvantesSpectrometer::init_device()
     attr_enableElectricalDarkCorrection_read = new Tango::DevBoolean(false);
     attr_BoxcarWidth_read = new Tango::DevULong(0);
     attr_enableBackgroundSubtraction_read = new Tango::DevBoolean(false);
+    attr_enableNLCorrection_read = new Tango::DevBoolean(false);
     attr_boardTemperature_read = new Tango::DevDouble(0.0);
     attr_enableTEC_read = new Tango::DevBoolean(false);
     attr_TECSetpoint_read = new Tango::DevDouble(0.0);
@@ -114,6 +117,10 @@ void AvantesSpectrometer::init_device()
     firmwareVersion = new Tango::DevString();
     spectrometerModel = new Tango::DevString();
     spectrum_lock = new omni_mutex();
+    background = NULL;
+    wavelength = NULL;
+    spectrum = NULL;
+    background_ok = false;
 
     // Create property names
     stringstream propname;
@@ -377,13 +384,19 @@ void AvantesSpectrometer::add_dynamic_attributes() {
         tectemperature_prop.set_standard_unit("\xB0" "C");
         tectemperature_prop.set_display_unit("\xB0" "C");
         tectemperature_prop.set_format("%.1f");
-        tectemperature_prop.set_event_rel_change("0.5");
-        tectemperature_prop.set_event_abs_change("0.2");
+        tectemperature_prop.set_event_abs_change("0.1");
         tectemperature->set_default_properties(tectemperature_prop);
-        tectemperature->set_polling_period(3000);
-        tectemperature->set_change_event(true, true);
+//         tectemperature->set_polling_period(3000);
+//         tectemperature->set_change_event(true, true);
+        tectemperature->set_change_event(true, false);
         tectemperature->set_disp_level(Tango::OPERATOR);
         add_attribute(tectemperature);
+    }
+
+    try {
+        update_analog_attributes();
+    } catch(Tango::DevFailed &e) {
+        ERROR_STREAM << "Failed to read analog attributes after INIT (Error: " << e.errors[0].desc << ")" << endl;
     }
 }
 
@@ -415,6 +428,7 @@ void AvantesSpectrometer::spectrum_callback(AvsHandle* handle, int* retval) {
         // Store spectrum as background
         memcpy(background->get_buffer(), spectrum->get_buffer(), sizeof(Tango::DevDouble) * spectrum->length());
         updateBackground = false;
+        background_ok = true;
         return;
     }
 
@@ -455,6 +469,70 @@ double AvantesSpectrometer::convert_analog_read(float value, float* coeff, size_
         out += pow(value, i) * coeff[i];
     }
     return out;
+}
+
+
+// Update analog attributes
+void AvantesSpectrometer::update_analog_attributes() {
+
+    // Stop acquisition and force a readout of analog sensors
+    int retval = 0;
+    struct timespec slp;
+    slp.tv_sec = 0;
+    slp.tv_nsec = 10000000;
+
+    // Stop measurement
+    AVSerializer::AVS_StopMeasure(handle);
+    nanosleep(&slp, NULL);
+
+    float value = 0.0;
+    retval = AVSerializer::AVS_GetAnalogIn(handle, 6, &value);
+    if(retval) {
+        ERROR_STREAM << "Failed to read board temperature with error " << retval << endl;
+    } else {
+        *(attr_boardTemperature_read) = convert_analog_read(value, dev_config.m_aTemperature[0].m_aFit, NR_TEMP_POL_COEF);
+        push_change_event("BoardTemperature", attr_boardTemperature_read);
+    }
+
+    if(coolingAvailable) {
+        value = 0.0;
+        retval = 0;
+        retval = AVSerializer::AVS_GetAnalogIn(handle, 0, &value);
+        if(retval) {
+            TangoSys_OMemStream msg;
+            ERROR_STREAM << "Failed to read TEC temperature with error " << retval << endl;
+            return;
+        } else {
+            *(attr_TECTemperature_read) = convert_analog_read(value, dev_config.m_aTemperature[2].m_aFit, NR_TEMP_POL_COEF);
+            push_change_event("TECTemperature", attr_TECTemperature_read);
+        }
+    }
+
+    // Configure measurement
+    retval = AVSerializer::AVS_PrepareMeasure(handle, &config);
+    if(retval) {
+        TangoSys_OMemStream msg;
+        msg << "Failed to configure measurement with error " << retval;
+        ERROR_STREAM << msg.str() << endl;
+        set_state(Tango::FAULT);
+        Tango::Except::throw_exception(
+            (const char*)"Failed to configure",
+            msg.str(),
+            (const char*)"AvantesSpectrometer::update_analog_attributes()");
+    }
+
+    // Restart measurement
+    retval = AVSerializer::AVS_Measure(handle, AvsDispatcher::spectrum_callback, (old_triggering) ? 1 : -1);
+    if(retval) {
+        TangoSys_OMemStream msg;
+        msg << "Failed to start measurement with error " << retval;
+        ERROR_STREAM << msg.str() << endl;
+        set_state(Tango::FAULT);
+        Tango::Except::throw_exception(
+            (const char*)"Failed to start",
+            msg.str(),
+            (const char*)"AvantesSpectrometer::update_analog_attributes()");
+    }
 }
 
 

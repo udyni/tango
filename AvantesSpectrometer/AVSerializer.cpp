@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of AvantesSpectrometer.
@@ -113,7 +114,9 @@ int AVSerializer::AVS_Measure(AvsHandle a_hDevice, void (*__Done)(AvsHandle*, in
 }
 
 int AVSerializer::AVS_GetScopeData(AvsHandle a_hDevice, unsigned int* a_pTimeLabel, double* a_pSpectrum) {
-    omni_mutex_lock access_lock(*(AVSerializer::instance()->_lock));
+    // Locking AVS_GetScopeData can lead to deadlock. This function is called only from the callback and the library is already locked.
+    // If another method is called between entering the callback and AVS_GetScopeData the library will hang indefinitely.
+    //omni_mutex_lock access_lock(*(AVSerializer::instance()->_lock));  
     return ::AVS_GetScopeData(a_hDevice, a_pTimeLabel, a_pSpectrum);
 }
 

@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of AvantesSpectrometer.
@@ -76,6 +77,29 @@ public:
     virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any) { return true; }
 };
 
+//    Command getSpectrum class definition
+class forceTemperatureUpdateClass : public Tango::Command
+{
+public:
+    forceTemperatureUpdateClass(
+        const char        *name,
+        Tango::CmdArgType in,
+        Tango::CmdArgType out,
+        const char        *in_desc,
+        const char        *out_desc,
+        Tango::DispLevel  level)
+    : Command(name, in, out, in_desc, out_desc, level) {};
+
+    forceTemperatureUpdateClass(
+        const char        *name,
+        Tango::CmdArgType in,
+        Tango::CmdArgType out)
+    : Command(name, in, out) {};
+    ~forceTemperatureUpdateClass() {};
+
+    virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+    virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any) { return true; }
+};
 
 } // End of namespace
 #endif

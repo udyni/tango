@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of AvantesSpectrometer.
@@ -99,5 +100,13 @@ CORBA::Any *resetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CO
     return new CORBA::Any();
 }
 
+CORBA::Any *forceTemperatureUpdateClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any)) {
+    AvantesSpectrometer *srv = static_cast<AvantesSpectrometer *>(device);
+
+    // Update analog attributes
+    srv->update_analog_attributes();
+
+    return new CORBA::Any();
+}
 
 } // End of namespace
