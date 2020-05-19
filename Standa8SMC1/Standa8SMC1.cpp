@@ -430,6 +430,9 @@ void Standa8SMC1::read_Acceleration(Tango::Attribute &attr)
 {
 	DEBUG_STREAM << "Standa8SMC1::read_Acceleration(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(Standa8SMC1::read_Acceleration) ENABLED START -----*/
+
+	*attr_Acceleration_read = dev_params.AccelT;
+
 	//	Set the attribute value
 	attr.set_value(attr_Acceleration_read);
 
@@ -452,6 +455,25 @@ void Standa8SMC1::write_Acceleration(Tango::WAttribute &attr)
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(Standa8SMC1::write_Acceleration) ENABLED START -----*/
 
+	float new_ac = w_val;
+
+	dev_params.AccelT = new_ac;
+	dev_params.DecelT = new_ac;
+
+	int r = driver->setParameters(dev_id, &dev_params);
+	if(r < 0) {
+		// Failed
+		std::stringstream msg;
+		msg << "Failed to set acceleration with error " << r;
+		ERROR_STREAM << msg.str() << endl;
+		// Rollback
+		r = driver->getParameters(dev_id, &dev_params);
+		if(r < 0)
+			ERROR_STREAM << "Rollback of parameters failed with error " << r << endl;
+		Tango::Except::throw_exception((const char *)"Set acceleration failed",
+					msg.str(),
+					(const char *)"Standa8SMC1::write_Acceleration()");
+	}
 
 	/*----- PROTECTED REGION END -----*/	//	Standa8SMC1::write_Acceleration
 }
