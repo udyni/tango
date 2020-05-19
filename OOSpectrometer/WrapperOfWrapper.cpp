@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of OOSpectrometer.
@@ -16,7 +17,6 @@
 //  along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 //=============================================================================
 
-#define WOW_IMPLEMENTATION
 #include <iostream>
 #include <libusb-1.0/libusb.h>
 #include "WrapperOfWrapper.h"

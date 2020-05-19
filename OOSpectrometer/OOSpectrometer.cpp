@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of OOSpectrometer.
@@ -230,6 +231,24 @@ void OOSpectrometer::init_device()
         ERROR_STREAM << "Failed to set default integration time and dark subtraction status (Error: " << e.what() << ")" << endl;
     }
 
+    // Set minimum and maximum integration time
+    Tango::Attribute& att = get_device_attr()->get_attr_by_name("IntegrationTime");
+    Tango::MultiAttrProp<Tango::DevFloat> att_prop;
+    att.get_properties(att_prop);
+    try {
+        Tango::DevULong min_val = WrapperOfWrapper::instance()->getMinimumIntegrationTime(spec_id);
+        Tango::DevULong max_val = WrapperOfWrapper::instance()->getMaximumIntegrationTime(spec_id);
+        DEBUG_STREAM << "Setting integration time limits (" << min_val << " us, " << max_val << " us)" << endl;
+        att_prop.min_value.set_val(float(min_val) / 1000.0);
+        att_prop.max_value.set_val(float(max_val) / 1000.0);
+    } catch(...) {
+        // Got an exception. Setting a conservative default
+        DEBUG_STREAM << "Setting integration time limits to default (10ms, 3sec)" << endl;
+        att_prop.min_value.set_val(10.0);
+        att_prop.max_value.set_val(3000.0);
+    }
+    att.set_properties(att_prop);
+
     // Start acquisition thread
     acq = new SpecThread(this);
 
@@ -239,38 +258,6 @@ void OOSpectrometer::init_device()
 
 // Add dynamic attributes
 void OOSpectrometer::add_dynamic_attributes() {
-
-    // Add IntegrationTime attribute
-    IntegrationTimeAttrib *integrationtime = new IntegrationTimeAttrib();
-    Tango::UserDefaultAttrProp integrationtime_prop;
-    integrationtime_prop.set_description("Spectrometer integration time");
-    integrationtime_prop.set_label("Integration time");
-    integrationtime_prop.set_unit("ms");
-    integrationtime_prop.set_standard_unit("ms");
-    integrationtime_prop.set_display_unit("ms");
-    integrationtime_prop.set_format("%.2f");
-    try {
-        Tango::DevULong min_val = WrapperOfWrapper::instance()->getMinimumIntegrationTime(spec_id);
-        Tango::DevULong max_val = WrapperOfWrapper::instance()->getMaximumIntegrationTime(spec_id);
-        DEBUG_STREAM << "Setting integration time limits (" << min_val << " us, " << max_val << " us)" << endl;
-        stringstream val;
-        val << float(min_val) / 1000.0;
-        integrationtime_prop.set_min_value(val.str().c_str());
-        DEBUG_STREAM << "Min value string: " << val.str() << endl;
-        val.str("");
-        val << float(max_val) / 1000.0;
-        DEBUG_STREAM << "Max value string: " << val.str() << endl;
-        integrationtime_prop.set_max_value(val.str().c_str());
-    } catch(...) {
-        // Got an exception. Setting a conservative default
-        DEBUG_STREAM << "Setting integration time limits to default (10ms, 3sec)" << endl;
-        integrationtime_prop.set_min_value("10000"); // 10 ms
-        integrationtime_prop.set_max_value("3000000"); // 3 sec
-    }
-    integrationtime->set_default_properties(integrationtime_prop);
-    integrationtime->set_disp_level(Tango::OPERATOR);
-    integrationtime->set_change_event(true, false);
-    add_attribute(integrationtime);
 
     // Check if spectrometer support TEC
     if(WrapperOfWrapper::instance()->coolingAvailable(spec_id)) {
@@ -289,10 +276,12 @@ void OOSpectrometer::add_dynamic_attributes() {
         Tango::UserDefaultAttrProp tecsetpoint_prop;
         tecsetpoint_prop.set_description("Thermo-electric cooler setpoint");
         tecsetpoint_prop.set_label("TEC setpoint");
-        tecsetpoint_prop.set_unit("\xB0" "C");
-        tecsetpoint_prop.set_standard_unit("\xB0" "C");
-        tecsetpoint_prop.set_display_unit("\xB0" "C");
+        tecsetpoint_prop.set_unit("°C");
+        tecsetpoint_prop.set_standard_unit("°C");
+        tecsetpoint_prop.set_display_unit("°C");
         tecsetpoint_prop.set_format("%.1f");
+        tecsetpoint_prop.set_max_value("25.0");
+        tecsetpoint_prop.set_min_value("-50.0");
         tecsetpoint->set_default_properties(tecsetpoint_prop);
         tecsetpoint->set_disp_level(Tango::OPERATOR);
         tecsetpoint->set_change_event(true, false);
@@ -303,9 +292,9 @@ void OOSpectrometer::add_dynamic_attributes() {
         Tango::UserDefaultAttrProp tectemperature_prop;
         tectemperature_prop.set_description("Thermo-electric cooler actual temperature");
         tectemperature_prop.set_label("TEC temperature");
-        tectemperature_prop.set_unit("\xB0" "C");
-        tectemperature_prop.set_standard_unit("\xB0" "C");
-        tectemperature_prop.set_display_unit("\xB0" "C");
+        tectemperature_prop.set_unit("°C");
+        tectemperature_prop.set_standard_unit("°C");
+        tectemperature_prop.set_display_unit("°C");
         tectemperature_prop.set_format("%.1f");
         tectemperature_prop.set_event_rel_change("0.5");
         tectemperature_prop.set_event_abs_change("0.2");

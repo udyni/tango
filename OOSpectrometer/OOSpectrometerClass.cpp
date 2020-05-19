@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of OOSpectrometer.
@@ -322,6 +323,20 @@ void OOSpectrometerClass::device_factory(const Tango::DevVarStringArray *devlist
 // Attribute factory
 void OOSpectrometerClass::attribute_factory(vector<Tango::Attr *> &att_list) {
 
+    // Add IntegrationTime attribute
+    IntegrationTimeAttrib *integrationtime = new IntegrationTimeAttrib();
+    Tango::UserDefaultAttrProp integrationtime_prop;
+    integrationtime_prop.set_description("Spectrometer integration time");
+    integrationtime_prop.set_label("Integration time");
+    integrationtime_prop.set_unit("ms");
+    integrationtime_prop.set_standard_unit("ms");
+    integrationtime_prop.set_display_unit("ms");
+    integrationtime_prop.set_format("%.2f");
+    integrationtime->set_default_properties(integrationtime_prop);
+    integrationtime->set_disp_level(Tango::OPERATOR);
+    integrationtime->set_change_event(true, false);
+    att_list.push_back(integrationtime);
+
     // Attribute : ScansToAverage
     ScansToAverageAttrib* scanstoaverage = new ScansToAverageAttrib();
     Tango::UserDefaultAttrProp scanstoaverage_prop;
@@ -371,9 +386,9 @@ void OOSpectrometerClass::attribute_factory(vector<Tango::Attr *> &att_list) {
     Tango::UserDefaultAttrProp btemp_prop;
     btemp_prop.set_description("Spectrometer board temperature");
     btemp_prop.set_label("Board Temperature");
-    btemp_prop.set_unit("\xB0" "C");
-    btemp_prop.set_standard_unit("\xB0" "C");
-    btemp_prop.set_display_unit("\xB0" "C");
+    btemp_prop.set_unit("°C");
+    btemp_prop.set_standard_unit("°C");
+    btemp_prop.set_display_unit("°C");
     btemp_prop.set_format("%.1f");
     btemp_prop.set_event_rel_change("0.5");
     btemp_prop.set_event_abs_change("0.2");

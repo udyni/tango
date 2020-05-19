@@ -1,3 +1,4 @@
+// kate: replace-tabs on; indent-width 4; indent-mode cstyle;
 //=============================================================================
 //
 //  This file is part of OOSpectrometer.
@@ -34,13 +35,6 @@
 
 namespace OOSpectrometer_ns
 {
-
-// Extern declaration of global wrapper object
-#ifndef WOW_IMPLEMENTATION
-class WrapperOfWrapper;
-extern WrapperOfWrapper wow_main;
-#endif
-
 
 #define WOWEXCEPTION_MSG_LEN 256
 // Wrapper of Wrapper exception
