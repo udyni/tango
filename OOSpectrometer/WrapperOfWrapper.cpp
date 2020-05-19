@@ -646,7 +646,7 @@ void WrapperOfWrapper::getSpectrum(int id, double *data, size_t len) {
 
         if(_dev_params[id].nlc_enable) {
             for(size_t i = 0; i < len; i++)
-                data[i] *= correct_for_nonlinearity(data[i], _dev_params[id].nl_coeff);
+                data[i] += data[i] * correct_for_nonlinearity(data[i], _dev_params[id].nl_coeff);
         }
 
         // Subtract electric dark if enabled
