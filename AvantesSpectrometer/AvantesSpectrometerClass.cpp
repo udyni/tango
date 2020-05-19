@@ -394,11 +394,11 @@ void AvantesSpectrometerClass::attribute_factory(vector<Tango::Attr *> &att_list
     Tango::UserDefaultAttrProp btemp_prop;
     btemp_prop.set_description("Spectrometer board temperature");
     btemp_prop.set_label("Board Temperature");
-    btemp_prop.set_unit("\xB0" "C");
-    btemp_prop.set_standard_unit("\xB0" "C");
-    btemp_prop.set_display_unit("\xB0" "C");
+    btemp_prop.set_unit("°C");
+    btemp_prop.set_standard_unit("°C");
+    btemp_prop.set_display_unit("°C");
     btemp_prop.set_format("%.1f");
-    btemp_prop.set_event_abs_change("0.2");
+//     btemp_prop.set_event_abs_change("0.2");
     btemp->set_default_properties(btemp_prop);
 //     btemp->set_polling_period(3000);
 //     btemp->set_change_event(true, true);
