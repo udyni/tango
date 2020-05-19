@@ -64,8 +64,8 @@ class GainConverter(object):
 class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
 
     # Device properties
-    cameraSerial = PTS.device_property(dtype=str)
-    rois = PTS.device_property(dtype=[str, ], default_value=[])
+    cameraSerial = PTS.device_property(dtype=str, doc="Serial number of the camera we want to connect to.")
+    rois = PTS.device_property(dtype=[str, ], default_value=[], doc='Image ROIs <x, y, w, h> (NOTE: x and y are the upper left corner)')
 
     # Attributes
     ExposureTime = PTS.attribute(
@@ -229,7 +229,7 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
                 # Exposure time lower limit
                 attr = PT.Attr("AutoExposureLowerLimit", PT.DevDouble, PT.AttrWriteType.READ_WRITE)
                 attr_prop = PT.UserDefaultAttrProp()
-                attr_prop.label = "Auto exosure time lower limit"
+                attr_prop.label = "Auto exposure time lower limit"
                 attr_prop.min_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMin())
                 attr_prop.max_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsLowerLimit.GetMax())
                 attr_prop.format = "%.1f"
@@ -243,7 +243,7 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
                 # Exposure time upper limit
                 attr = PT.Attr("AutoExposureUpperLimit", PT.DevDouble, PT.AttrWriteType.READ_WRITE)
                 attr_prop = PT.UserDefaultAttrProp()
-                attr_prop.label = "Auto exosure time lower limit"
+                attr_prop.label = "Auto exposure time lower limit"
                 attr_prop.min_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsUpperLimit.GetMin())
                 attr_prop.max_value = "{0:.1f}".format(self.camera.AutoExposureTimeAbsUpperLimit.GetMax())
                 attr_prop.format = "%.1f"
@@ -343,7 +343,7 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
             for i in range(len(self.rois_img)):
                 try:
                     r = self.rois_img[i]
-                    roi_img = image[r['x']:r['x']+r['w'], r['y']:r['y']+r['h']]
+                    roi_img = image[r['y']:r['y']+r['h'], r['x']:r['x']+r['w']]
 
                     self.rois_img[i]['image'] = roi_img
                     self.push_change_event(r['name'], roi_img, roi_img.shape[1], roi_img.shape[0])
@@ -450,9 +450,16 @@ class BaslerGigE(PTS.Device, metaclass=PTS.DeviceMeta):
     def write_TriggerSource(self, attr):
         """ Set trigger source
         """
+        w_id = attr.get_write_value()
+        w_val = self.camera.TriggerSource.GetSymbolics()[w_id]
+        c_val = self.camera.TriggerSource.GetValue()
+        if w_val == c_val:
+            # No modification. Just return
+            return
+
         try:
-            # TODO
-            pass
+            self.camera.TriggerSource.SetValue(w_val)
+            self.push_change_event("TriggerSource", w_id)
         except pylon.GenericException as e:
             try:
                 msg = e.GetDescription()
