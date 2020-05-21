@@ -49,9 +49,10 @@ void IntegrationTimeAttrib::write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
         Tango::DevFloat w_val;
         att.get_write_value(w_val);
         uint32_t time_micros = uint32_t(w_val * 1000.0);
-        if(wow->getIntegrationTime(srv->spec_id) == time_micros)
+        if(wow->getIntegrationTime(srv->spec_id) == time_micros) {
             // Nothing to do
-            return
+            return;
+        }
         wow->setIntegrationTime(srv->spec_id, time_micros);
         *(srv->attr_IntegrationTime_read) = w_val;
         srv->push_change_event(att.get_name(), srv->attr_IntegrationTime_read);
