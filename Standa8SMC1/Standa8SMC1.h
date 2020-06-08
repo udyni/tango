@@ -95,7 +95,7 @@ public:
 
 //	Attribute data members
 public:
-	Tango::DevDouble	*attr_Position_read;
+	Tango::DevLong	*attr_Position_read;
 	Tango::DevDouble	*attr_Acceleration_read;
 	Tango::DevDouble	*attr_Velocity_read;
 	Tango::DevDouble	*attr_Temperature_read;
@@ -176,7 +176,7 @@ public:
  *	Attribute Position related methods
  *	Description: 
  *
- *	Data type:	Tango::DevDouble
+ *	Data type:	Tango::DevLong
  *	Attr type:	Scalar
  */
 	virtual void read_Position(Tango::Attribute &attr);

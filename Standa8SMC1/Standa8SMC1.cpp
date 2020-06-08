@@ -60,7 +60,7 @@
 //================================================================
 //  Attributes managed are:
 //================================================================
-//  Position      |  Tango::DevDouble	Scalar
+//  Position      |  Tango::DevLong	Scalar
 //  Acceleration  |  Tango::DevDouble	Scalar
 //  Velocity      |  Tango::DevDouble	Scalar
 //  Temperature   |  Tango::DevDouble	Scalar
@@ -149,17 +149,17 @@ void Standa8SMC1::init_device()
 	//	Initialization before get_device_property() call
 
 	/*----- PROTECTED REGION END -----*/	//	Standa8SMC1::init_device_before
-
+	
 
 	//	Get the device properties from database
 	get_device_property();
-
-	attr_Position_read = new Tango::DevDouble[1];
+	
+	attr_Position_read = new Tango::DevLong[1];
 	attr_Acceleration_read = new Tango::DevDouble[1];
 	attr_Velocity_read = new Tango::DevDouble[1];
 	attr_Temperature_read = new Tango::DevDouble[1];
 	attr_Voltage_read = new Tango::DevDouble[1];
-	//	No longer if mandatory property not set.
+	//	No longer if mandatory property not set. 
 	if (mandatoryNotDefined)
 		return;
 
@@ -245,7 +245,7 @@ void Standa8SMC1::get_device_property()
 		//	Call database and extract values
 		if (Tango::Util::instance()->_UseDb==true)
 			get_db_device()->get_property(dev_prop);
-
+	
 		//	get instance on Standa8SMC1Class to get class property
 		Tango::DbDatum	def_prop, cl_prop;
 		Standa8SMC1Class	*ds_class =
@@ -321,7 +321,7 @@ void Standa8SMC1::check_mandatory_property(Tango::DbDatum &class_prop, Tango::Db
 //--------------------------------------------------------
 void Standa8SMC1::always_executed_hook()
 {
-	DEBUG_STREAM << "Standa8SMC1::always_executed_hook()  " << device_name << endl;
+// 	DEBUG_STREAM << "Standa8SMC1::always_executed_hook()  " << device_name << endl;
 	if (mandatoryNotDefined)
 	{
 		string	status(get_status());
@@ -345,7 +345,7 @@ void Standa8SMC1::always_executed_hook()
 //--------------------------------------------------------
 void Standa8SMC1::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 {
-	DEBUG_STREAM << "Standa8SMC1::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
+// 	DEBUG_STREAM << "Standa8SMC1::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
 	/*----- PROTECTED REGION ID(Standa8SMC1::read_attr_hardware) ENABLED START -----*/
 
 	//	Add your own code
@@ -360,7 +360,7 @@ void Standa8SMC1::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 //--------------------------------------------------------
 void Standa8SMC1::write_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 {
-	DEBUG_STREAM << "Standa8SMC1::write_attr_hardware(vector<long> &attr_list) entering... " << endl;
+// 	DEBUG_STREAM << "Standa8SMC1::write_attr_hardware(vector<long> &attr_list) entering... " << endl;
 	/*----- PROTECTED REGION ID(Standa8SMC1::write_attr_hardware) ENABLED START -----*/
 
 	//	Add your own code
@@ -371,9 +371,9 @@ void Standa8SMC1::write_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 //--------------------------------------------------------
 /**
  *	Read attribute Position related method
- *	Description:
+ *	Description: 
  *
- *	Data type:	Tango::DevDouble
+ *	Data type:	Tango::DevLong
  *	Attr type:	Scalar
  */
 //--------------------------------------------------------
@@ -389,9 +389,9 @@ void Standa8SMC1::read_Position(Tango::Attribute &attr)
 //--------------------------------------------------------
 /**
  *	Write attribute Position related method
- *	Description:
+ *	Description: 
  *
- *	Data type:	Tango::DevDouble
+ *	Data type:	Tango::DevLong
  *	Attr type:	Scalar
  */
 //--------------------------------------------------------
@@ -399,12 +399,11 @@ void Standa8SMC1::write_Position(Tango::WAttribute &attr)
 {
 	DEBUG_STREAM << "Standa8SMC1::write_Position(Tango::WAttribute &attr) entering... " << endl;
 	//	Retrieve write value
-	Tango::DevDouble	w_val;
+	Tango::DevLong	w_val;
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(Standa8SMC1::write_Position) ENABLED START -----*/
 
-	uint32_t pos = uint32_t(w_val);
-	int r = driver->moveTo(dev_id, pos);
+	int r = driver->moveTo(dev_id, w_val);
 	if(r < 0) {
 		// Failed
 		std::stringstream msg;
@@ -420,7 +419,7 @@ void Standa8SMC1::write_Position(Tango::WAttribute &attr)
 //--------------------------------------------------------
 /**
  *	Read attribute Acceleration related method
- *	Description:
+ *	Description: 
  *
  *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
@@ -441,7 +440,7 @@ void Standa8SMC1::read_Acceleration(Tango::Attribute &attr)
 //--------------------------------------------------------
 /**
  *	Write attribute Acceleration related method
- *	Description:
+ *	Description: 
  *
  *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
@@ -480,7 +479,7 @@ void Standa8SMC1::write_Acceleration(Tango::WAttribute &attr)
 //--------------------------------------------------------
 /**
  *	Read attribute Velocity related method
- *	Description:
+ *	Description: 
  *
  *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
@@ -503,7 +502,7 @@ void Standa8SMC1::read_Velocity(Tango::Attribute &attr)
 //--------------------------------------------------------
 /**
  *	Write attribute Velocity related method
- *	Description:
+ *	Description: 
  *
  *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
@@ -534,7 +533,7 @@ void Standa8SMC1::write_Velocity(Tango::WAttribute &attr)
 //--------------------------------------------------------
 /**
  *	Read attribute Temperature related method
- *	Description:
+ *	Description: 
  *
  *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
@@ -552,7 +551,7 @@ void Standa8SMC1::read_Temperature(Tango::Attribute &attr)
 //--------------------------------------------------------
 /**
  *	Read attribute Voltage related method
- *	Description:
+ *	Description: 
  *
  *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar

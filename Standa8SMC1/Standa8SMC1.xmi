@@ -60,7 +60,7 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </commands>
     <attributes name="Position" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
-      <dataType xsi:type="pogoDsl:DoubleType"/>
+      <dataType xsi:type="pogoDsl:IntType"/>
       <changeEvent fire="true" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
       <dataReadyEvent fire="false" libCheckCriteria="true"/>

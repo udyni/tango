@@ -59,7 +59,7 @@ class PositionAttrib: public Tango::Attr
 {
 public:
 	PositionAttrib():Attr("Position",
-			Tango::DEV_DOUBLE, Tango::READ_WRITE) {};
+			Tango::DEV_LONG, Tango::READ_WRITE) {};
 	~PositionAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
 		{(static_cast<Standa8SMC1 *>(dev))->read_Position(att);}
