@@ -150,9 +150,10 @@ void RawProxy::init_device()
 
 	//	Get the device properties from database
 	get_device_property();
+	
+	//	No longer if mandatory property not set. 
 	if (mandatoryNotDefined)
 		return;
-	
 
 	/*----- PROTECTED REGION ID(RawProxy::init_device) ENABLED START -----*/
 
@@ -214,6 +215,7 @@ void RawProxy::get_device_property()
 	dev_prop.push_back(Tango::DbDatum("DeviceType"));
 	dev_prop.push_back(Tango::DbDatum("SerialBaud"));
 	dev_prop.push_back(Tango::DbDatum("SerialSetup"));
+	dev_prop.push_back(Tango::DbDatum("SecondaryTimeout"));
 
 	//	is there at least one property to be read ?
 	if (dev_prop.size()>0)
@@ -302,6 +304,17 @@ void RawProxy::get_device_property()
 		//	And try to extract SerialSetup value from database
 		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  serialSetup;
 
+		//	Try to initialize SecondaryTimeout from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  secondaryTimeout;
+		else {
+			//	Try to initialize SecondaryTimeout from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  secondaryTimeout;
+		}
+		//	And try to extract SecondaryTimeout value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  secondaryTimeout;
+
 	}
 
 	/*----- PROTECTED REGION ID(RawProxy::get_device_property_after) ENABLED START -----*/
@@ -347,7 +360,7 @@ void RawProxy::check_mandatory_property(Tango::DbDatum &class_prop, Tango::DbDat
 //--------------------------------------------------------
 void RawProxy::always_executed_hook()
 {
-	INFO_STREAM << "RawProxy::always_executed_hook()  " << device_name << endl;
+// 	DEBUG_STREAM << "RawProxy::always_executed_hook()  " << device_name << endl;
 	if (mandatoryNotDefined)
 	{
 		string	status(get_status());
@@ -388,7 +401,7 @@ void RawProxy::always_executed_hook()
 //--------------------------------------------------------
 void RawProxy::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 {
-	DEBUG_STREAM << "RawProxy::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
+// 	DEBUG_STREAM << "RawProxy::read_attr_hardware(vector<long> &attr_list) entering... " << endl;
 	/*----- PROTECTED REGION ID(RawProxy::read_attr_hardware) ENABLED START -----*/
 
 	//	Add your own code
@@ -512,7 +525,7 @@ void RawProxy::disconnect()
 //--------------------------------------------------------
 void RawProxy::flush()
 {
-	DEBUG_STREAM << "RawProxy::Flush()  - " << device_name << endl;
+// 	DEBUG_STREAM << "RawProxy::Flush()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(RawProxy::flush) ENABLED START -----*/
 
 	try {
@@ -542,7 +555,7 @@ void RawProxy::flush()
 Tango::DevLong RawProxy::send(const Tango::DevVarCharArray *argin)
 {
 	Tango::DevLong argout;
-	DEBUG_STREAM << "RawProxy::Send()  - " << device_name << endl;
+// 	DEBUG_STREAM << "RawProxy::Send()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(RawProxy::send) ENABLED START -----*/
 
 	argout = 0;
@@ -577,7 +590,7 @@ Tango::DevLong RawProxy::send(const Tango::DevVarCharArray *argin)
 Tango::DevVarCharArray *RawProxy::recv(Tango::DevLong argin)
 {
 	Tango::DevVarCharArray *argout;
-	DEBUG_STREAM << "RawProxy::Recv()  - " << device_name << endl;
+// 	DEBUG_STREAM << "RawProxy::Recv()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(RawProxy::recv) ENABLED START -----*/
 
 	argout = NULL;
@@ -626,7 +639,7 @@ Tango::DevVarCharArray *RawProxy::recv(Tango::DevLong argin)
 Tango::DevVarCharArray *RawProxy::sync_send_recv(const Tango::DevVarCharArray *argin)
 {
 	Tango::DevVarCharArray *argout;
-	DEBUG_STREAM << "RawProxy::SyncSendRecv()  - " << device_name << endl;
+// 	DEBUG_STREAM << "RawProxy::SyncSendRecv()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(RawProxy::sync_send_recv) ENABLED START -----*/
 	
 	// First send message
@@ -673,9 +686,9 @@ Tango::DevVarCharArray *RawProxy::sync_send_recv(const Tango::DevVarCharArray *a
 			buffer.push_back(temp_buffer[0]);
 			memset(temp_buffer, 0, 1);
 
-			// If we get data, start a cycle of reads, with 5 ms timeout. Stop cycle when no more data is received
+			// If we get data, start a cycle of reads, with secondaryTimeout timeout. Stop cycle when no more data is received
 			while(1) {
-				ans = sock->recv(temp_buffer, RECV_PACKET_SIZE, 5);
+				ans = sock->recv(temp_buffer, RECV_PACKET_SIZE, secondaryTimeout);
 				if(ans <= 0)
 					break;
 				buffer.reserve(buffer.size() + ans);
@@ -703,6 +716,21 @@ Tango::DevVarCharArray *RawProxy::sync_send_recv(const Tango::DevVarCharArray *a
 
 	/*----- PROTECTED REGION END -----*/	//	RawProxy::sync_send_recv
 	return argout;
+}
+//--------------------------------------------------------
+/**
+ *	Method      : RawProxy::add_dynamic_commands()
+ *	Description : Create the dynamic commands if any
+ *                for specified device.
+ */
+//--------------------------------------------------------
+void RawProxy::add_dynamic_commands()
+{
+	/*----- PROTECTED REGION ID(RawProxy::add_dynamic_commands) ENABLED START -----*/
+	
+	//	Add your own code to create and add dynamic commands if any
+	
+	/*----- PROTECTED REGION END -----*/	//	RawProxy::add_dynamic_commands
 }
 
 /*----- PROTECTED REGION ID(RawProxy::namespace_ending) ENABLED START -----*/

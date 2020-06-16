@@ -50,6 +50,7 @@ namespace RawProxy_ns
 //		Attributes Allowed Methods
 //=================================================
 
+
 //=================================================
 //		Commands Allowed Methods
 //=================================================
@@ -143,5 +144,12 @@ bool RawProxy::is_SyncSendRecv_allowed(TANGO_UNUSED(const CORBA::Any &any))
 	/*----- PROTECTED REGION END -----*/	//	RawProxy::SyncSendRecvStateAllowed
 	return true;
 }
+
+
+/*----- PROTECTED REGION ID(RawProxy::RawProxyStateAllowed.AdditionalMethods) ENABLED START -----*/
+
+//	Additional Methods
+
+/*----- PROTECTED REGION END -----*/	//	RawProxy::RawProxyStateAllowed.AdditionalMethods
 
 }	//	End of namespace

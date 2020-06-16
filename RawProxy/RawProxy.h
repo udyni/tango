@@ -93,6 +93,8 @@ public:
 	//  Stopbits may be 1 or 2.
 	//  Default is 8N1.
 	string	serialSetup;
+	//	SecondaryTimeout:	Timeout for recv operations after the first successful one in SyncSendRecv (some slow devices need higher timeout values)
+	Tango::DevULong	secondaryTimeout;
 
 	bool	mandatoryNotDefined;
 
@@ -123,7 +125,7 @@ public:
 	RawProxy(Tango::DeviceClass *cl,const char *s,const char *d);
 	/**
 	 * The device object destructor.
-	 */	
+	 */
 	~RawProxy() {delete_device();};
 
 
@@ -169,6 +171,7 @@ public:
 	 */
 	//--------------------------------------------------------
 	void add_dynamic_attributes();
+
 
 
 
@@ -224,6 +227,14 @@ public:
 	virtual Tango::DevVarCharArray *sync_send_recv(const Tango::DevVarCharArray *argin);
 	virtual bool is_SyncSendRecv_allowed(const CORBA::Any &any);
 
+
+	//--------------------------------------------------------
+	/**
+	 *	Method      : RawProxy::add_dynamic_commands()
+	 *	Description : Add dynamic commands if any.
+	 */
+	//--------------------------------------------------------
+	void add_dynamic_commands();
 
 /*----- PROTECTED REGION ID(RawProxy::Additional Method prototypes) ENABLED START -----*/
 

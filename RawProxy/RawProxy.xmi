@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
-  <classes name="RawProxy" pogoRevision="8.1">
-    <description description="Raw proxy for binary serial communication. May be used locally or through TCP/IP" title="Raw proxy for serial communication" sourcePath="/home/wyrdmeister/Documents/Work/SoftProjects/Udyni/Tango/RawProxy" language="Cpp" filestogenerate="XMI   file,Code files" license="GPL" hasMandatoryProperty="true" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
+  <classes name="RawProxy" pogoRevision="9.4">
+    <description description="Raw proxy for binary serial communication. May be used locally or through TCP/IP" title="Raw proxy for serial communication" sourcePath="/home/wyrdmeister/Documents/Development/Projects/Udyni/TangoDevices/RawProxy" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="true" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at mail.polimi.it - michele.devetta" author="michele.devetta" emailDomain="mail.polimi.it" classFamily="Communication" siteSpecific="" platform="Unix Like" bus="Serial or TCP/IP" manufacturer="none" reference=""/>
     </description>
@@ -30,6 +30,11 @@
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>8N1</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="SecondaryTimeout" description="Timeout for recv operations after the first successful one in SyncSendRecv (some slow devices need higher timeout values)">
+      <type xsi:type="pogoDsl:UIntType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>5</DefaultPropValue>
     </deviceProperties>
     <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="none">
@@ -103,6 +108,6 @@
       </argout>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </commands>
-    <preferences docHome="./doc_html" makefileHome="../Common/make_env"/>
+    <preferences docHome="./doc_html" makefileHome="$(TANGO_HOME)"/>
   </classes>
 </pogoDsl:PogoSystem>
