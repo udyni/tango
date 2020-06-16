@@ -316,6 +316,7 @@ private:
 
 	// Axis
 	int _axis;
+	int _address;
 };
 
 

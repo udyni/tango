@@ -578,10 +578,18 @@ void Picomotor::add_dynamic_commands()
 //	Additional Methods
 PicomotorDev::PicomotorDev(const char* device, int axis, Picomotor* parent) :
 	_terminate(false),
-	_axis(axis),
 	_device(NULL),
 	_parent(parent)
 {
+	// Extract address and axis
+	axis = axis - 1;
+	_address = (axis / 4) + 1;
+	_axis = (axis % 4) + 1;
+
+	if(_parent->get_logger()->is_debug_enabled()) {
+		_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Address: " << _address << ", Axis: " << _axis << endl;
+	}
+
 	// Connect to communication proxy
 	_device = new Tango::DeviceProxy(device);
 
@@ -612,9 +620,13 @@ std::string PicomotorDev::SendCommandWithResponse(const char* command) {
 
 		// Build input parameter
 		Tango::DevString cmd = new char[32];
-		snprintf(cmd, 32, "%d%s", _axis, command);
+		snprintf(cmd, 32, "%d>%d%s", _address, _axis, command);
 		cmd[31] = 0x00;
 		din << cmd;
+
+		if(_parent->get_logger()->is_debug_enabled()) {
+			_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Sending command: " << cmd;
+		}
 
 		// Send command
 		{
@@ -623,8 +635,17 @@ std::string PicomotorDev::SendCommandWithResponse(const char* command) {
 		}
 		// Extrac response
 		dout >> response;
+
+		if(_parent->get_logger()->is_debug_enabled()) {
+			_parent->get_logger()->debug_stream() << ". Answer: " << response << endl;
+		}
 	}
-	return response;
+	std::size_t found = response.find(">");
+	if(found!=std::string::npos) {
+		return response.substr(found+1);
+	} else {
+		return response;
+	}
 }
 
 
@@ -633,9 +654,13 @@ void PicomotorDev::SendCommand(const char* command) {
 		Tango::DeviceData din;
 		// Build input parameter
 		Tango::DevString cmd = new char[32];
-		snprintf(cmd, 32, "%d%s", _axis, command);
+		snprintf(cmd, 32, "%d>%d%s", _address, _axis, command);
 		cmd[31] = 0x00;
 		din << cmd;
+
+		if(_parent->get_logger()->is_debug_enabled()) {
+			_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Sending command: " << cmd << endl;
+		}
 
 		// Send command
 		{
@@ -717,6 +742,10 @@ void* PicomotorDev::run_undetached(void *arg) {
 		if(_parent && _device) {
 			try {
 				int st = readState();
+				if(_parent->get_logger()->is_debug_enabled()) {
+					_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Got device state: " << st << endl;
+				}
+
 				// Update device state
 				if(st == 0)
 					_parent->set_state(Tango::MOVING);
@@ -732,6 +761,9 @@ void* PicomotorDev::run_undetached(void *arg) {
 
 			try {
 				int32_t pos = readPos();
+				if(_parent->get_logger()->is_debug_enabled()) {
+					_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Got device position: " << pos << endl;
+				}
 				if(pos != _position) {
 					_position = pos;
 					*(_parent->attr_Position_read) = _position;
