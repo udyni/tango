@@ -698,7 +698,7 @@ void PicomotorDev::check_error_code() {
 
 
 // Convert error code to string
-const char* picomotor_strerror(int err_code) {
+const char* PicomotorDev::picomotor_strerror(int err_code) {
 	switch(err_code) {
 		case 0:
 			return "No error detected";
