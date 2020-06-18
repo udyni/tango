@@ -291,6 +291,9 @@ protected:
 	// Check error code after move/set command. Throw exception if the error code is set.
 	void check_error_code();
 
+	// Convert error code to error message
+	const char* picomotor_strerror(int err_code);
+
 protected:
 	// Main loop function
 	void* run_undetached(void *arg);

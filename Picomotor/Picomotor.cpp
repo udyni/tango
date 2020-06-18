@@ -678,10 +678,9 @@ void PicomotorDev::check_error_code() {
 	try {
 		int err_code = std::stoi(ans);
 		if(err_code != 0) {
-			// Found error. Let's read the error message
-			std::string err = SendCommandWithResponse("TB?");
+			// Found error.
 			std::stringstream msg;
-			msg << "Picomotor error: " << err;
+			msg << "Picomotor error: [" << err_code << "] " << picomotor_strerror(err_code);
 			Tango::Except::throw_exception(
 				(const char *)"Failed to execute command",
 				msg.str(),
@@ -697,6 +696,89 @@ void PicomotorDev::check_error_code() {
 	}
 }
 
+
+// Convert error code to string
+const char* picomotor_strerror(int err_code) {
+	switch(err_code) {
+		case 0:
+			return "No error detected";
+
+		case 3:
+			return "Overtemperature shutdown";
+
+		case 6:
+			return "Command does not exist";
+
+		case 7:
+			return "Parameter out of range";
+
+		case 9:
+			return "Axis number out of range";
+
+		case 10:
+			return "EEPROM write failed";
+
+		case 11:
+			return "EEPROM read failed";
+
+		case 37:
+			return "Axis number missing";
+
+		case 38:
+			return "Command parameter missing";
+
+		case 46:
+			return "RS-485 ETX fault detected";
+
+		case 47:
+			return "RS-485 CRC fault detected";
+
+		case 48:
+			return "Controller number out of range";
+
+		case 49:
+			return "Scan in progress";
+
+		case 100:
+		case 200:
+		case 300:
+		case 400:
+			return "Motor type not defined";
+
+		case 101:
+		case 201:
+		case 301:
+		case 401:
+			return "Parameter out of range";
+
+		case 108:
+		case 208:
+		case 308:
+		case 408:
+			return "Motor not connected";
+
+		case 110:
+		case 210:
+		case 310:
+		case 410:
+			return "Maximum velocity exceeded";
+
+		case 111:
+		case 211:
+		case 311:
+		case 411:
+			return "Maximum acceleration exceeded";
+
+		case 114:
+		case 214:
+		case 314:
+		case 414:
+			return "Motion in progress";
+
+		default:
+			return "Unknown error";
+	}
+}
 
 // Set velocity
 void PicomotorDev::setVelocity(uint16_t vel) {
