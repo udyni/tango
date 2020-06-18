@@ -288,6 +288,9 @@ protected:
 
 	static void msleep(uint32_t msec);
 
+	// Check error code after move/set command. Throw exception if the error code is set.
+	void check_error_code();
+
 protected:
 	// Main loop function
 	void* run_undetached(void *arg);

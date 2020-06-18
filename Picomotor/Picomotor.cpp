@@ -670,6 +670,34 @@ void PicomotorDev::SendCommand(const char* command) {
 	}
 }
 
+
+// Check error code
+void PicomotorDev::check_error_code() {
+	std::string ans = SendCommandWithResponse("TE?");
+	// Convert to int
+	try {
+		int err_code = std::stoi(ans);
+		if(err_code != 0) {
+			// Found error. Let's read the error message
+			std::string err = SendCommandWithResponse("TB?");
+			std::stringstream msg;
+			msg << "Picomotor error: " << err;
+			Tango::Except::throw_exception(
+				(const char *)"Failed to execute command",
+				msg.str(),
+				(const char *)"PicomotorDev::check_error_code()");
+		}
+	} catch(std::exception &e) {
+		std::stringstream msg;
+			msg << "Failed to check Picomotor error status: " << e.what();
+			Tango::Except::throw_exception(
+				(const char *)"Failed to execute command",
+				msg.str(),
+				(const char *)"PicomotorDev::check_error_code()");
+	}
+}
+
+
 // Set velocity
 void PicomotorDev::setVelocity(uint16_t vel) {
 	// Format command
@@ -677,6 +705,11 @@ void PicomotorDev::setVelocity(uint16_t vel) {
 	command << "VA" << vel;
 	// Send commmand
 	SendCommand(command.str().c_str());
+	// Sleep for 100 ms
+	msleep(100);
+	// Check error code
+	check_error_code();
+	// Store velocity
 	_velocity = vel;
 }
 
@@ -687,6 +720,11 @@ void PicomotorDev::setAcceleration(uint32_t acc) {
 	command << "AC" << acc;
 	// Send commmand
 	SendCommand(command.str().c_str());
+	// Sleep for 100 ms
+	msleep(100);
+	// Check error code
+	check_error_code();
+	// Store acceleration
 	_acceleration = acc;
 }
 
@@ -697,11 +735,19 @@ void PicomotorDev::moveTo(int32_t pos) {
 	command << "PA" << pos;
 	// Send commmand
 	SendCommand(command.str().c_str());
+	// Sleep for 100 ms
+	msleep(100);
+	// Check error code
+	check_error_code();
 }
 
 // Set home
 void PicomotorDev::setHome() {
 	SendCommand("DH");
+	// Sleep for 100 ms
+	msleep(100);
+	// Check error code
+	check_error_code();
 }
 
 // Read state from device
