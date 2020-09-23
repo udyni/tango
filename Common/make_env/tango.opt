@@ -1,3 +1,4 @@
+# kate: replace-tabs off; indent-width 4; indent-mode cstyle; remove-trailing-spaces all; tab-indents on; tab-width 4; indent-width 4
 #------------------------------------------------------------------------------
 #-- gcc version
 #------------------------------------------------------------------------------
@@ -95,7 +96,7 @@ endif
 endif
 
 #------------------------------------------------------------------------------
-#-- INCLUDE_DIRS 
+#-- INCLUDE_DIRS
 #------------------------------------------------------------------------------
 INCLUDE_DIRS  = $(INC_DIR_USER)
 INCLUDE_DIRS +=	-I../include -I.
@@ -143,7 +144,7 @@ endif
 #------------------------------------------------------------------------------
 #-- CXXFLAGS
 #------------------------------------------------------------------------------
-CXXFLAGS =
+CXXFLAGS = -Wno-deprecated
 
 ifeq ($(RELEASE_TYPE),DEBUG)
 	CXXFLAGS +=	-g -D_DEBUG
@@ -164,7 +165,7 @@ CXXFLAGS += -D_REENTRANT -W $(INCLUDE_DIRS) $(CXXFLAGS_USER) $(CXX11)  -Dlinux
 #------------------------------------------------------------------------------
 #-- CFLAGS
 #------------------------------------------------------------------------------
-CFLAGS =
+CFLAGS = -Wno-deprecated
 
 ifeq ($(RELEASE_TYPE),DEBUG)
 	CFLAGS +=	-g -D_DEBUG
@@ -198,7 +199,16 @@ endif
 LDFLAGS +=	$(LDFLAGS_USER) $(LIB_DIR_USER)
 
 ifeq ($(TANGO_REQUIRED),TRUE)
-	LDFLAGS +=	-L$(TANGO_HOME)/lib -ltango -llog4tango
+	# Find libtango
+	MY_TANGO_LIB := $(shell find $(TANGO_HOME)/lib -name libtango.so)
+
+	# Check if libtango has log4tango built in (new versions compiled from github with cmake)
+	ifneq (,$(shell nm -D -C --defined-only $(MY_TANGO_LIB) | grep vtable | grep log4tango::Logger$))
+		LDFLAGS +=	-L$(TANGO_HOME)/lib -ltango
+	else
+		LDFLAGS +=	-L$(TANGO_HOME)/lib -ltango -llog4tango
+	endif
+
 	LDFLAGS +=	-L$(OMNI_HOME)/lib -L$(ZMQ_HOME)/lib -lCOS4 -lomniORB4 -lomniDynamic4 -lomnithread -lzmq
 endif
 

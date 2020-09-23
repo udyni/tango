@@ -143,6 +143,13 @@ ifneq ($(OBJ_DIR),/tmp)
 	rm -rf $(OBJ_DIR)
 endif
 endif
+
+#------------------------------------------------------------------------------
+#-- clean_binaries:
+#------------------------------------------------------------------------------
+clean_binaries: $(SPECIFIC_CLEAN_TARGET)
+	@echo "Cleaning binaries of "$(PROJECT_NAME)
+
 ifeq ($(PROJECT_TYPE),SIMPLE_EXE)
 	rm -f $(OUTPUT_DIR)/$(PROJECT_NAME)
 endif

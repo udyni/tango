@@ -50,7 +50,16 @@ OUTPUT_TYPE = DEVICE
 #	- ./lib   if OUTPUT_TYPE is STATIC_LIB
 #	- ./bin for others
 #
-OUTPUT_DIR = ./bin/$(BIN_DIR)
+DISTRIBUTION = $(shell lsb_release -s -i)
+CODENAME = $(shell lsb_release -s -c)
+PLATFORM = $(shell uname -m)
+
+OUTPUT_DIR = ../Binaries/$(DISTRIBUTION).$(CODENAME)/$(PLATFORM)/
+ifdef BUILD_ROOT
+	OBJ_DIR = $(BUILD_ROOT)/$(PACKAGE_NAME)
+else
+	OBJ_DIR = /tmp/tango_build/$(PACKAGE_NAME)
+endif
 
 #=============================================================================
 # INC_DIR_USER is the list of all include path needed by your sources
