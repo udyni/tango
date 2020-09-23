@@ -30,14 +30,16 @@
 #include <vector>
 #include <exception>
 
-#define GPIO_SYSFS_BASE   "/sys/class/gpio"
-#define GPIO_MAX_PATH     256
-#define GPIO_DIR_INPUT    0
-#define GPIO_DIR_OUTPUT   1
-#define GPIO_EDGE_NONE    0
-#define GPIO_EDGE_RISING  1
-#define GPIO_EDGE_FALLING 2
-#define GPIO_EDGE_BOTH    3
+#define GPIO_SYSFS_BASE      "/sys/class/gpio"
+#define GPIO_MAX_PATH        256
+#define GPIO_DIR_INPUT       0
+#define GPIO_DIR_OUTPUT      1
+#define GPIO_DIR_OUTPUT_HIGH 2
+#define GPIO_DIR_OUTPUT_LOW  3
+#define GPIO_EDGE_NONE       0
+#define GPIO_EDGE_RISING     1
+#define GPIO_EDGE_FALLING    2
+#define GPIO_EDGE_BOTH       3
 
 #define GPIO_ERROR_MSG_LEN 256
 

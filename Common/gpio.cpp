@@ -97,7 +97,7 @@ GPIO::~GPIO() {
 		int ans = ::snprintf(buffer, 16, "%hu", _gpio);
 		buffer[15] = '\0';
 		if(ans != -1)
-			::write(fd, buffer, strlen(buffer));
+			ans = ::write(fd, buffer, strlen(buffer));
 		::close(fd);
 	}
 }
@@ -180,6 +180,10 @@ void GPIO::setDirection(int direction) {
 		str = "in";
 	} else if(direction == GPIO_DIR_OUTPUT) {
 		str = "out";
+    } else if(direction == GPIO_DIR_OUTPUT_HIGH) {
+        str = "high";
+    } else if(direction == GPIO_DIR_OUTPUT_LOW) {
+        str = "low";
 	} else {
 		// Bad value
 		throw GPIOException("Got bad value for GPIO direction (%d)", direction);
@@ -317,7 +321,7 @@ int GPIO::poll(const std::vector<GPIO*>& pins, int timeout, std::vector<int>& tr
 			// Poll triggered by GPIO interrupt
 			for(size_t i = 0; i < fd.size(); i++) {
 #ifdef _DEBUG
-				printf("FD %d output flags: ", i);
+				printf("FD %zu output flags: ", i);
 				if(fds[i].revents & POLLIN)
 					printf("POLLIN ");
 				if(fds[i].revents & POLLPRI)
