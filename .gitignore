@@ -34,3 +34,8 @@
 # Ignore build binaries and object dirs
 */obj/*
 */bin/*
+Binaries/**
+
+# Ignore starter directory that is another GIT repo
+Starter/**
+
