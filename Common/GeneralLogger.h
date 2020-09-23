@@ -20,28 +20,30 @@
 #include <ostream>
 #include <iostream>
 
+using namespace std;
+
 
 class GeneralLogger {
 public:
-    GeneralLogger() : _debug(&std::cout), _info(&std::cout), _warning(&std::cerr), _error(&std::cerr), _initiator(NULL), _separator(NULL) {};
+    GeneralLogger() : _debug(&cout), _info(&cout), _warning(&cerr), _error(&cerr), _initiator(NULL), _separator(NULL) {};
     ~GeneralLogger() {};
 
     // Set loggin streams
-    void set_debug_stream(std::ostream* stream) { if(stream) _debug = stream; }
-    void set_info_stream(std::ostream* stream) { if(stream) _info = stream; }
-    void set_warning_stream(std::ostream* stream) { if(stream) _warning = stream; }
-    void set_error_stream(std::ostream* stream) { if(stream) _error = stream; }
+    void set_debug_stream(ostream* stream) { if(stream) _debug = stream; }
+    void set_info_stream(ostream* stream) { if(stream) _info = stream; }
+    void set_warning_stream(ostream* stream) { if(stream) _warning = stream; }
+    void set_error_stream(ostream* stream) { if(stream) _error = stream; }
 
     // Set initiator
-    void set_initiator(void (*func)(std::ostream&)) { if(func) _initiator = func; }
+    void set_initiator(void (*func)(ostream&)) { if(func) _initiator = func; }
     // Set separator
-    void set_separator(void (*func)(std::ostream&)) { if(func) _separator = func; }
+    void set_separator(void (*func)(ostream&)) { if(func) _separator = func; }
 
     // Get logging streams
-    std::ostream& get_debug() { return *_debug; }
-    std::ostream& get_info() { return *_info; }
-    std::ostream& get_warning() { return *_warning; }
-    std::ostream& get_error() { return *_error; }
+    ostream& get_debug() { return *_debug; }
+    ostream& get_info() { return *_info; }
+    ostream& get_warning() { return *_warning; }
+    ostream& get_error() { return *_error; }
 
     // Logging functions
     void log_debug(const char* fmt, ...) {
@@ -79,7 +81,7 @@ public:
 
 private:
     // Format log string
-    std::string format_message(const char* fmt, va_list args) {
+    string format_message(const char* fmt, va_list args) {
 
         size_t size = 1024;
         char* buffer = new char[size];
@@ -89,7 +91,7 @@ private:
 
             // If that worked, return a string.
             if ((n > -1) && (static_cast<size_t>(n) < size)) {
-                std::string s(buffer);
+                string s(buffer);
                 delete [] buffer;
                 return s;
             }
@@ -105,12 +107,12 @@ private:
     }
 
     // Initiator and separator functions
-    void (*_initiator)(std::ostream&);
-    void (*_separator)(std::ostream&);
+    void (*_initiator)(ostream&);
+    void (*_separator)(ostream&);
 
     // Output streams
-    std::ostream* _debug;
-    std::ostream* _info;
-    std::ostream* _warning;
-    std::ostream* _error;
+    ostream* _debug;
+    ostream* _info;
+    ostream* _warning;
+    ostream* _error;
 };
