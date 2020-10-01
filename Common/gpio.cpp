@@ -1,3 +1,4 @@
+// kate: replace-tabs off; indent-width 4; indent-mode cstyle; remove-trailing-spaces all; tab-indents on; tab-width 4
 /**
  * (c) 2015 - Michele Devetta (michele.devetta@mail.polimi.it)
  *
@@ -109,14 +110,14 @@ bool GPIO::read() {
 	int fd = ::open(_value, O_RDONLY);
 	if(fd == -1) {
 		// Error
-		throw GPIOException("Failed to open GPIO value file for reading (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to open GPIO %d value file for reading (Error: %s)", _gpio, strerror(errno));
 	}
 	char value;
 	int ans = ::read(fd, &value, 1);
 	if(ans == -1) {
 		// Error
 		::close(fd);
-		throw GPIOException("Failed to read GPIO value (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to read GPIO %d value (Error: %s)", _gpio, strerror(errno));
 	}
 	::close(fd);
 	if(value == '0')
@@ -132,7 +133,7 @@ void GPIO::write(bool value) {
 	int fd = ::open(_value, O_WRONLY);
 	if(fd == -1) {
 		// Error
-		throw GPIOException("Failed to open GPIO value file for writing (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to open GPIO %d value file for writing (Error: %s)", _gpio, strerror(errno));
 	}
 	const char *str;
 	if(value)
@@ -143,7 +144,7 @@ void GPIO::write(bool value) {
 	if(ans == -1) {
 		// Error
 		::close(fd);
-		throw GPIOException("Failed to write GPIO value (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to write GPIO %d value (Error: %s)", _gpio, strerror(errno));
 	}
 }
 
@@ -153,14 +154,14 @@ int GPIO::getDirection() {
 	int fd = ::open(_direction, O_RDONLY);
 	if(fd == -1) {
 		// Error
-		throw GPIOException("Failed to open GPIO direction file for reading (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to open GPIO %d direction file for reading (Error: %s)", _gpio, strerror(errno));
 	}
 	char value;
 	ssize_t ans = ::read(fd, &value, 1);
 	if(ans == -1) {
 		// Error
 		::close(fd);
-		throw GPIOException("Failed to read GPIO direction (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to read GPIO %d direction (Error: %s)", _gpio, strerror(errno));
 	}
 	::close(fd);
 	if(value == 'o') {
@@ -193,14 +194,14 @@ void GPIO::setDirection(int direction) {
 	int fd = ::open(_direction, O_WRONLY);
 	if(fd == -1) {
 		// Error
-		throw GPIOException("Failed to open GPIO direction file for writing (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to open GPIO %d direction file for writing (Error: %s)", _gpio, strerror(errno));
 	}
 
 	// Write direction
 	int ans = ::write(fd, str, strlen(str));
 	if(ans == -1) {
 		// Error
-		throw GPIOException("Failed to write GPIO direction (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to write GPIO %d direction (Error: %s)", _gpio, strerror(errno));
 	}
 }
 
@@ -210,14 +211,14 @@ int GPIO::getEdge() {
 	int fd = ::open(_edge, O_RDONLY);
 	if(fd == -1) {
 		// Error
-		throw GPIOException("Failed to open GPIO edge file for reading (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to open GPIO %d edge file for reading (Error: %s)", _gpio, strerror(errno));
 	}
 	char value;
 	ssize_t ans = ::read(fd, &value, 1);
 	if(ans == -1) {
 		// Error
 		::close(fd);
-		throw GPIOException("Failed to read GPIO edge (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to read GPIO %d edge (Error: %s)", _gpio, strerror(errno));
 	}
 	::close(fd);
 	if(value == 'n') {
@@ -229,7 +230,7 @@ int GPIO::getEdge() {
 	} else if(value == 'b') {
 		return GPIO_EDGE_BOTH;
 	} else {
-		throw GPIOException("Got unexpected edge value '%c'", value);
+		throw GPIOException("Got unexpected edge value '%c' for GPIO %d", value, _gpio);
 	}
 }
 
@@ -247,21 +248,21 @@ void GPIO::setEdge(int edge) {
 		str = "both";
 	} else {
 		// Bad value
-		throw GPIOException("Got bad value for GPIO edge (%d)", edge);
+		throw GPIOException("Got bad value for GPIO %d, edge (%d)", _gpio, edge);
 	}
 
 	// Open GPIO edge file
 	int fd = ::open(_edge, O_WRONLY);
 	if(fd == -1) {
 		// Error
-		throw GPIOException("Failed to open GPIO edge file for writing (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to open GPIO %d edge file for writing (Error: %s)", _gpio, strerror(errno));
 	}
 
 	// Write edge
 	int ans = ::write(fd, str, strlen(str));
 	if(ans == -1) {
 		// Error
-		throw GPIOException("Failed to write GPIO edge (Error: %s)", strerror(errno));
+		throw GPIOException("Failed to write GPIO %d edge (Error: %s)", _gpio, strerror(errno));
 	}
 }
 

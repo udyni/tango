@@ -1,3 +1,4 @@
+// kate: replace-tabs off; indent-width 4; indent-mode cstyle; remove-trailing-spaces all; tab-indents on; tab-width 4
 /**
  * (c) 2015 - Michele Devetta (michele.devetta@mail.polimi.it)
  *
