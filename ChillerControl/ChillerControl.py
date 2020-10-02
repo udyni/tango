@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Sep 28 17:12:12 2020
@@ -126,7 +126,7 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
 
         # Subscribe events from water valve
         self.water.subscribe_event("State", PT.EventType.CHANGE_EVENT, self.event_callback)
-        self.water.subscribe_event("Flow", PT.EventType.CHANGE_EVENT, self.event_callback)
+        self.water.subscribe_event("WaterFlow", PT.EventType.CHANGE_EVENT, self.event_callback)
 
     def read_WaterState(self):
         return self.attr_waterstate
