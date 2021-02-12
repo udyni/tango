@@ -262,7 +262,7 @@ class Picomotor8081(PTS.Device, metaclass=PTS.DeviceMeta):
 
     def write_Y(self, w_val):
         try:
-            delta = int((w_val - self._x) / self.linear_conversion)
+            delta = int((w_val - self._y) / self.linear_conversion)
             self.debug_stream("Moving Y by {0:d}".format(delta))
             self.dev_y1.Position = self._y1 + delta
             self.dev_y2.Position = self._y2 + delta
