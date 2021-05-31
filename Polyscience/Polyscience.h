@@ -294,6 +294,10 @@ private:
 	double _setpoint;
 	double _temperature;
 	double _flow;
+
+	// Starting flag and timestamp
+	bool starting;
+	struct timeval st_time;
 };
 
 /*----- PROTECTED REGION END -----*/	//	Polyscience::Additional Classes Definitions

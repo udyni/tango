@@ -37,6 +37,8 @@
 
 #include <Polyscience.h>
 #include <PolyscienceClass.h>
+#include <cmath>
+#include <iomanip>
 
 /*----- PROTECTED REGION END -----*/	//	Polyscience.cpp
 
@@ -472,17 +474,29 @@ void Polyscience::add_dynamic_commands()
 
 
 // Constructor
-PolyMonitor::PolyMonitor(const char* device, Polyscience* parent) : _terminate(false), _parent(parent) {
+PolyMonitor::PolyMonitor(const char* device, Polyscience* parent) : _terminate(false), _parent(parent), starting(false) {
 	// Connect to communication proxy
 	_device = new Tango::DeviceProxy(device);
 	msleep(100);
 	_device->command_inout("Flush");
 
+	// Clear starting timestamp
+	memset(&st_time, 0, sizeof(struct timeval));
 
 	// Initialize values
-	_temperature = readTemperature();
-	_flow = readFlow();
-	_setpoint = readSetpoint();
+	try {
+		_temperature = readTemperature();
+		_flow = readFlow();
+	} catch(Tango::DevFailed& e) {
+		_temperature = nan("");
+		_flow = nan("");
+	}
+
+	try {
+		_setpoint = readSetpoint();
+	} catch(Tango::DevFailed &e) {
+		_setpoint = nan("");
+	}
 
 	// Start thread
 	start_undetached();
@@ -638,10 +652,10 @@ void* PolyMonitor::run_undetached(void *arg) {
 
 	int index = 0;
 
-	struct timeval b, e;
+	struct timeval begin, end;
 	while(!_terminate) {
 
-		gettimeofday(&b, NULL);
+		gettimeofday(&begin, NULL);
 
 		std::string msg = "";
 		Tango::DevState tango_state = Tango::UNKNOWN;
@@ -658,6 +672,11 @@ void* PolyMonitor::run_undetached(void *arg) {
 				// Chiller is on
 				tango_state = Tango::RUNNING;
 				msg = "Chiller running";
+
+				// Check if we have a reading of the setpoint
+				if(isnan(_setpoint)) {
+					_setpoint = readSetpoint();
+				}
 
 			} else if(state == 19) {
 				// Chiller is in standby
@@ -763,9 +782,21 @@ void* PolyMonitor::run_undetached(void *arg) {
 				}
 			}
 		} catch(Tango::DevFailed &e) {
-			tango_state = Tango::ALARM;
+			if(starting) {
+				// Just after starting the state command may fail. We wait 5 seconds after start command before setting fault state
+				gettimeofday(&end, NULL);
+				int elapsed = ELAPSED_TIME_MS(st_time, end);
+				if(elapsed > 5000) {
+					starting = false;
+				} else {
+					msleep(500);
+					continue;
+				}
+			}
+
+			tango_state = Tango::FAULT;
 			std::stringstream message;
-			message << "Failed to poll chiller attribute (Error: " << e.errors[0].desc << ")";
+			message << "Failed to poll chiller status (Error: " << e.errors[0].desc << ")";
 			msg = message.str();
 
 			_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << " Failed to poll chiller status." << endl;
@@ -775,50 +806,61 @@ void* PolyMonitor::run_undetached(void *arg) {
 		}
 
 		// Poll parameter
-		try {
-			double val = 0.0;
-			switch(index) {
-				case 0:
-					// Poll temperature
-					val = readTemperature();
-					if(val != _temperature) {
-						_temperature = val;
-						_parent->push_change_event("Temperature", &_temperature);
-					}
-					if(_parent->get_logger()->is_debug_enabled()) {
-						_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Polled chiller temperature: " << _temperature << endl;
-					}
-					break;
+		if(tango_state != Tango::FAULT) {
+			try {
+				double val = 0.0;
+				switch(index) {
+					case 0:
+						// Poll temperature
+						val = readTemperature();
+						if(val != _temperature) {
+							_temperature = val;
+							_parent->push_change_event("Temperature", &_temperature);
+						}
+						if(_parent->get_logger()->is_debug_enabled()) {
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Polled chiller temperature: " << _temperature << endl;
+						}
+						break;
 
-				case 1:
-					// Poll flow
-					val = readFlow();
-					if(val != _flow) {
-						_flow = val;
-						_parent->push_change_event("Flow", &_flow);
-					}
-					if(_parent->get_logger()->is_debug_enabled()) {
-						_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Polled chiller flow: " << _flow << endl;
-					}
-					break;
+					case 1:
+						// Poll flow
+						val = readFlow();
+						if(val != _flow) {
+							_flow = val;
+							_parent->push_change_event("Flow", &_flow);
+						}
+						if(_parent->get_logger()->is_debug_enabled()) {
+							_parent->get_logger()->debug_stream() << log4tango::LogInitiator::_begin_log << "Polled chiller flow: " << _flow << endl;
+						}
+						break;
 
-				default:
-					break;
+					default:
+						break;
+				}
+
+				index++;
+				if(index > 1)
+					index = 0;
+
+			} catch(Tango::DevFailed &e) {
+				tango_state = Tango::ALARM;
+				std::stringstream message;
+				message << "Failed to poll chiller attribute (Error: " << e.errors[0].desc << ")";
+				msg = message.str();
+
+				_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << " Failed to poll chiller attribute." << endl;
+				for(size_t i = 0; i < e.errors.length(); i++) {
+					_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "[" << (i+1) << "] " << e.errors[i].desc << endl;
+				}
 			}
+		}
 
-			index++;
-			if(index > 1)
-				index = 0;
-
-		} catch(Tango::DevFailed &e) {
-			tango_state = Tango::ALARM;
-			std::stringstream message;
-			message << "Failed to poll chiller attribute (Error: " << e.errors[0].desc << ")";
-			msg = message.str();
-
-			_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << " Failed to poll chiller attribute." << endl;
-			for(size_t i = 0; i < e.errors.length(); i++) {
-				_parent->get_logger()->error_stream() << log4tango::LogInitiator::_begin_log << "[" << (i+1) << "] " << e.errors[i].desc << endl;
+		if(tango_state == Tango::FAULT) {
+			// Try to send a stop command
+			try {
+				this->stop();
+			} catch(Tango::DevFailed &e) {
+				// NOOP
 			}
 		}
 
@@ -827,9 +869,9 @@ void* PolyMonitor::run_undetached(void *arg) {
 		_parent->set_status(msg);
 
 		// Sleep
-		gettimeofday(&e, NULL);
+		gettimeofday(&end, NULL);
 
-		int elapsed = ELAPSED_TIME_MS(b, e);
+		int elapsed = ELAPSED_TIME_MS(begin, end);
 
 		if(elapsed < (int)_parent->polling)
 			msleep(_parent->polling - elapsed);
@@ -843,6 +885,9 @@ void PolyMonitor::start() {
 	bool is_running = checkRunning();
 
 	if(!is_running) {
+		starting = true;
+		gettimeofday(&st_time, NULL);
+
 		std::string rsp = SendCommandWithResponse("SO1");
 		if(rsp != "!") {
 			Tango::Except::throw_exception(
