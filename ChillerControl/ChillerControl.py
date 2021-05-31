@@ -93,14 +93,14 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
                 for ev in self.proxy_evs:
                     self.dev.unsubscribe_event(ev)
         except PT.DevFailed as e:
-            self.log_error("Error while unsubscribing from main device events (Error: {0!s})".format(e.args[0].desc))
+            self.error_stream("Error while unsubscribing from main device events (Error: {0!s})".format(e.args[0].desc))
 
         try:
             if self.water:
                 for ev in self.water_evs:
                     self.water.unsubscribe_event(ev)
         except PT.DevFailed as e:
-            self.log_error("Error while unsubscribing from main device events (Error: {0!s})".format(e.args[0].desc))
+            self.error_stream("Error while unsubscribing from main device events (Error: {0!s})".format(e.args[0].desc))
 
     def initialize_dynamic_attributes(self):
         """ Initialize dynamic attributes
@@ -141,7 +141,7 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
         if ev.err:
             # Log error
             # TODO: handle event errors! E.g. heartbeat timeouts!
-            self.log_error("Event error: {0!s}".format(ev.errors[0].desc))
+            self.error_stream("Event error: {0!s}".format(ev.errors[0].desc))
 
         else:
             attr_name = ev.attr_value.name.lower()
@@ -263,9 +263,10 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
                                         self.set_state(PT.DevState.FAULT)
                                 else:
                                     # We are not starting. Should we close the water?
-                                    if self.attr_devstate in (PT.DevState.ON, PT.DevState.ALARM):
-                                        # Ignore
-                                        pass
+                                    if self.attr_devstate in (PT.DevState.ON, PT.DevState.RUNNING, PT.DevState.ALARM):
+                                        # Set water status to open if it was not the case (may happen after a reset)
+                                        if self.attr_waterstate != PT.DevState.OPEN:
+                                            self.attr_waterstate = PT.DevState.OPEN
                                     else:
                                         try:
                                             self.water.Close()
@@ -274,7 +275,7 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
 
                             elif state == PT.DevState.CLOSE:
                                 # We were switching off?
-                                if self.attr_devstate == PT.DevState.ON:
+                                if self.attr_devstate in (PT.DevState.ON, PT.DevState.RUNNING, PT.DevState.ALARM):
                                     # Chiller is still on, we need to open water valve again
                                     try:
                                         self.water.Open()
@@ -318,7 +319,7 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
                         self.push_change_event("WaterState", self.attr_waterstate)
                         self.attr_waterstate = ev.attr_value.value
 
-                elif attr_name == "flow":
+                elif attr_name == "waterflow":
                     if self.attr_waterflow is None or self.attr_waterflow != ev.attr_value.value:
                         self.attr_waterflow = ev.attr_value.value
                         self.push_change_event("WaterFlow", self.attr_waterflow)
@@ -332,8 +333,8 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
         self.monitor_running = True
         s = time.time()
         while not self.monitor_terminate:   # Check status for 10 seconds
-            time.sleep(0.2)
-            if (time.time() - s) > 10:
+            time.sleep(1)
+            if (time.time() - s) > 20:
                 # Timeout elapsed. Failed to start
                 if self.attr_waterstate == PT.DevState.OPEN:
                     try:
@@ -404,7 +405,7 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
             self.__stop_chiller()
         except PT.DevFailed as e:
             # Set status as FAULT
-            self.log_stream("Failed to stop chiller (Error: {0!s})".format(e.args[0].desc))
+            self.error_stream("Failed to stop chiller (Error: {0!s})".format(e.args[0].desc))
             self.set_state(PT.DevState.FAULT)
 
     @PTS.command()
@@ -463,10 +464,15 @@ class ChillerControl(PTS.Device, metaclass=PTS.DeviceMeta):
             if dev_state in (PT.DevState.ON, PT.DevState.RUNNING, PT.DevState.ALARM):
                 # Chiller is on
                 # TODO: this may need some more thinking
-                self.__stop_chiller()
-                self.attr_devstate = dev_state
-                self.attr_waterstate = water_state
-                self.set_state(PT.DevState.ON)
+                try:
+                    self.water.Open()
+                    self.attr_devstate = dev_state
+                    self.attr_waterstate = water_state
+                    self.set_state(PT.DevState.ON)
+
+                except PT.DevFailed as e:
+                    self.__stop_chiller()
+                    self.set_state(PT.DevState.FAULT)
 
             else:
                 # Chiller is off
