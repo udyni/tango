@@ -269,6 +269,8 @@ int WrapperOfWrapper::openAllSpectrometers() {
     if(_dev_params.size()) {
         _spec_open = true;
     }
+
+    return _dev_params.size();
 }
 
 

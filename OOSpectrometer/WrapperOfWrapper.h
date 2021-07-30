@@ -127,8 +127,8 @@ public:
 
 private:
     // Prohibit copy
-    DevParameters(const DevParameters& obj) {}
-    DevParameters& operator=(const DevParameters& obj) {}
+    DevParameters(const DevParameters& obj);
+    DevParameters& operator=(const DevParameters& obj);
 
 public:
     void add_device(long int _id, long int _spec_id, std::string _serial, uint32_t _integration);
@@ -148,7 +148,8 @@ private:
     WrapperOfWrapper();
 
     // Private copy constructor to prevent copying
-    WrapperOfWrapper(const WrapperOfWrapper& obj) {};
+    WrapperOfWrapper(const WrapperOfWrapper& obj);
+    WrapperOfWrapper& operator=(const WrapperOfWrapper& obj);
 
 public:
     static void usb_reset();
