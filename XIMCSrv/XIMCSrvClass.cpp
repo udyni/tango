@@ -71,15 +71,15 @@ XIMCSrvClass *XIMCSrvClass::_instance = NULL;
 
 //--------------------------------------------------------
 /**
- * method : 		XIMCSrvClass::XIMCSrvClass(string &s)
+ * method : 		XIMCSrvClass::XIMCSrvClass(std::string &s)
  * description : 	constructor for the XIMCSrvClass
  *
  * @param s	The class name
  */
 //--------------------------------------------------------
-XIMCSrvClass::XIMCSrvClass(string &s):Tango::DeviceClass(s)
+XIMCSrvClass::XIMCSrvClass(std::string &s):Tango::DeviceClass(s)
 {
-	cout2 << "Entering XIMCSrvClass constructor" << endl;
+	cout2 << "Entering XIMCSrvClass constructor" << std::endl;
 	set_default_property();
 	write_class_property();
 
@@ -87,7 +87,7 @@ XIMCSrvClass::XIMCSrvClass(string &s):Tango::DeviceClass(s)
 
 	/*----- PROTECTED REGION END -----*/	//	XIMCSrvClass::constructor
 
-	cout2 << "Leaving XIMCSrvClass constructor" << endl;
+	cout2 << "Leaving XIMCSrvClass constructor" << std::endl;
 }
 
 //--------------------------------------------------------
@@ -121,10 +121,10 @@ XIMCSrvClass *XIMCSrvClass::init(const char *name)
 	{
 		try
 		{
-			string s(name);
+			std::string s(name);
 			_instance = new XIMCSrvClass(s);
 		}
-		catch (bad_alloc &)
+		catch (std::bad_alloc &)
 		{
 			throw;
 		}
@@ -143,7 +143,7 @@ XIMCSrvClass *XIMCSrvClass::instance()
 {
 	if (_instance == NULL)
 	{
-		cerr << "Class is not initialised !!" << endl;
+		std::cerr << "Class is not initialised !!" << std::endl;
 		exit(-1);
 	}
 	return _instance;
@@ -167,7 +167,7 @@ XIMCSrvClass *XIMCSrvClass::instance()
 //--------------------------------------------------------
 CORBA::Any *GoHomeClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
 {
-	cout2 << "GoHomeClass::execute(): arrived" << endl;
+	cout2 << "GoHomeClass::execute(): arrived" << std::endl;
 	((static_cast<XIMCSrv *>(device))->go_home());
 	return new CORBA::Any();
 }
@@ -185,7 +185,7 @@ CORBA::Any *GoHomeClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const C
 //--------------------------------------------------------
 CORBA::Any *SetZeroClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
 {
-	cout2 << "SetZeroClass::execute(): arrived" << endl;
+	cout2 << "SetZeroClass::execute(): arrived" << std::endl;
 	((static_cast<XIMCSrv *>(device))->set_zero());
 	return new CORBA::Any();
 }
@@ -203,8 +203,8 @@ CORBA::Any *SetZeroClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const 
 //--------------------------------------------------------
 CORBA::Any *MoveAbsoluteClass::execute(Tango::DeviceImpl *device, const CORBA::Any &in_any)
 {
-	cout2 << "MoveAbsoluteClass::execute(): arrived" << endl;
-	Tango::DevFloat argin;
+	cout2 << "MoveAbsoluteClass::execute(): arrived" << std::endl;
+	Tango::DevDouble argin;
 	extract(in_any, argin);
 	((static_cast<XIMCSrv *>(device))->move_absolute(argin));
 	return new CORBA::Any();
@@ -223,8 +223,8 @@ CORBA::Any *MoveAbsoluteClass::execute(Tango::DeviceImpl *device, const CORBA::A
 //--------------------------------------------------------
 CORBA::Any *MoveRelativeClass::execute(Tango::DeviceImpl *device, const CORBA::Any &in_any)
 {
-	cout2 << "MoveRelativeClass::execute(): arrived" << endl;
-	Tango::DevFloat argin;
+	cout2 << "MoveRelativeClass::execute(): arrived" << std::endl;
+	Tango::DevDouble argin;
 	extract(in_any, argin);
 	((static_cast<XIMCSrv *>(device))->move_relative(argin));
 	return new CORBA::Any();
@@ -243,7 +243,7 @@ CORBA::Any *MoveRelativeClass::execute(Tango::DeviceImpl *device, const CORBA::A
 //--------------------------------------------------------
 CORBA::Any *PowerOffClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
 {
-	cout2 << "PowerOffClass::execute(): arrived" << endl;
+	cout2 << "PowerOffClass::execute(): arrived" << std::endl;
 	((static_cast<XIMCSrv *>(device))->power_off());
 	return new CORBA::Any();
 }
@@ -261,7 +261,7 @@ CORBA::Any *PowerOffClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const
 //--------------------------------------------------------
 CORBA::Any *MoveLeftClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
 {
-	cout2 << "MoveLeftClass::execute(): arrived" << endl;
+	cout2 << "MoveLeftClass::execute(): arrived" << std::endl;
 	((static_cast<XIMCSrv *>(device))->move_left());
 	return new CORBA::Any();
 }
@@ -279,7 +279,7 @@ CORBA::Any *MoveLeftClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const
 //--------------------------------------------------------
 CORBA::Any *MoveRightClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
 {
-	cout2 << "MoveRightClass::execute(): arrived" << endl;
+	cout2 << "MoveRightClass::execute(): arrived" << std::endl;
 	((static_cast<XIMCSrv *>(device))->move_right());
 	return new CORBA::Any();
 }
@@ -297,7 +297,7 @@ CORBA::Any *MoveRightClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(cons
 //--------------------------------------------------------
 CORBA::Any *StopClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
 {
-	cout2 << "StopClass::execute(): arrived" << endl;
+	cout2 << "StopClass::execute(): arrived" << std::endl;
 	((static_cast<XIMCSrv *>(device))->stop());
 	return new CORBA::Any();
 }
@@ -315,7 +315,7 @@ CORBA::Any *StopClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const COR
 //--------------------------------------------------------
 CORBA::Any *ResetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
 {
-	cout2 << "ResetClass::execute(): arrived" << endl;
+	cout2 << "ResetClass::execute(): arrived" << std::endl;
 	((static_cast<XIMCSrv *>(device))->reset());
 	return new CORBA::Any();
 }
@@ -330,7 +330,7 @@ CORBA::Any *ResetClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CO
  *	Description : Get the class property for specified name.
  */
 //--------------------------------------------------------
-Tango::DbDatum XIMCSrvClass::get_class_property(string &prop_name)
+Tango::DbDatum XIMCSrvClass::get_class_property(std::string &prop_name)
 {
 	for (unsigned int i=0 ; i<cl_prop.size() ; i++)
 		if (cl_prop[i].name == prop_name)
@@ -345,7 +345,7 @@ Tango::DbDatum XIMCSrvClass::get_class_property(string &prop_name)
  *	Description : Return the default value for device property.
  */
 //--------------------------------------------------------
-Tango::DbDatum XIMCSrvClass::get_default_device_property(string &prop_name)
+Tango::DbDatum XIMCSrvClass::get_default_device_property(std::string &prop_name)
 {
 	for (unsigned int i=0 ; i<dev_def_prop.size() ; i++)
 		if (dev_def_prop[i].name == prop_name)
@@ -360,7 +360,7 @@ Tango::DbDatum XIMCSrvClass::get_default_device_property(string &prop_name)
  *	Description : Return the default value for class property.
  */
 //--------------------------------------------------------
-Tango::DbDatum XIMCSrvClass::get_default_class_property(string &prop_name)
+Tango::DbDatum XIMCSrvClass::get_default_class_property(std::string &prop_name)
 {
 	for (unsigned int i=0 ; i<cl_def_prop.size() ; i++)
 		if (cl_def_prop[i].name == prop_name)
@@ -381,16 +381,16 @@ Tango::DbDatum XIMCSrvClass::get_default_class_property(string &prop_name)
 //--------------------------------------------------------
 void XIMCSrvClass::set_default_property()
 {
-	string	prop_name;
-	string	prop_desc;
-	string	prop_def;
-	vector<string>	vect_data;
+	std::string	prop_name;
+	std::string	prop_desc;
+	std::string	prop_def;
+	std::vector<std::string>	vect_data;
 
 	//	Set Default Class Properties
 
 	//	Set Default device Properties
-	prop_name = "Proxy";
-	prop_desc = "Communication Tango device";
+	prop_name = "SerialNumber";
+	prop_desc = "XIMC device serial number";
 	prop_def  = "";
 	vect_data.clear();
 	if (prop_def.length()>0)
@@ -416,11 +416,95 @@ void XIMCSrvClass::set_default_property()
 	}
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
-	prop_name = "FirstHomingSpeed";
-	prop_desc = "Speed for the first search of the home position (if SecondHomingSpeed is zero this is the only one used!)";
-	prop_def  = "100";
+	prop_name = "Polling";
+	prop_desc = "Polling period in ms";
+	prop_def  = "1000";
 	vect_data.clear();
-	vect_data.push_back("100");
+	vect_data.push_back("1000");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "Conversion";
+	prop_desc = "Conversion of steps to physical units";
+	prop_def  = "1.0";
+	vect_data.clear();
+	vect_data.push_back("1.0");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "ConversionEnc";
+	prop_desc = "Conversion of encoder counts to physical units";
+	prop_def  = "1.0";
+	vect_data.clear();
+	vect_data.push_back("1.0");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "UseEncoder";
+	prop_desc = "Enable the use of the encoder";
+	prop_def  = "false";
+	vect_data.clear();
+	vect_data.push_back("false");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "Units";
+	prop_desc = "Units for position (for velocity will be units/s, for acceleration units/s^2)";
+	prop_def  = "mm";
+	vect_data.clear();
+	vect_data.push_back("mm");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "PositionFormat";
+	prop_desc = "Format string for stage position";
+	prop_def  = "%.3f";
+	vect_data.clear();
+	vect_data.push_back("%.3f");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "FirstHomingSpeed";
+	prop_desc = "Speed of the first homing move for the standard protocol (step/s)";
+	prop_def  = "500";
+	vect_data.clear();
+	vect_data.push_back("500");
 	if (prop_def.length()>0)
 	{
 		Tango::DbDatum	data(prop_name);
@@ -431,7 +515,63 @@ void XIMCSrvClass::set_default_property()
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
 	prop_name = "SecondHomingSpeed";
-	prop_desc = "Speed for the second, much finer, search of the home position (set to zero to disable second search))";
+	prop_desc = "Speed of the second homing move for the standard algorithm (step/s).\nIf the Fast Homing Algorithm is enabled, is the speed of the homing operation.";
+	prop_def  = "10";
+	vect_data.clear();
+	vect_data.push_back("10");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "UseFastAlgorithm";
+	prop_desc = "Use fast homing algorithm";
+	prop_def  = "true";
+	vect_data.clear();
+	vect_data.push_back("true");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "HomingDirection";
+	prop_desc = "Homing move direction: false for left, true for right (default left, i.e. negative direction))";
+	prop_def  = "false";
+	vect_data.clear();
+	vect_data.push_back("false");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "BlindMoveBeforeHoming";
+	prop_desc = "Move by this relative amount (in user units) before starting home search";
+	prop_def  = "0.0";
+	vect_data.clear();
+	vect_data.push_back("0.0");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "HomingDelta";
+	prop_desc = "Move to reach home position after limit swith trigger.";
 	prop_def  = "0";
 	vect_data.clear();
 	vect_data.push_back("0");
@@ -444,11 +584,11 @@ void XIMCSrvClass::set_default_property()
 	}
 	else
 		add_wiz_dev_prop(prop_name, prop_desc);
-	prop_name = "Polling";
-	prop_desc = "Polling period in ms";
-	prop_def  = "1000";
+	prop_name = "PositionAtHome";
+	prop_desc = "Position value at home";
+	prop_def  = "0";
 	vect_data.clear();
-	vect_data.push_back("1000");
+	vect_data.push_back("0");
 	if (prop_def.length()>0)
 	{
 		Tango::DbDatum	data(prop_name);
@@ -473,26 +613,25 @@ void XIMCSrvClass::write_class_property()
 		return;
 
 	Tango::DbData	data;
-	string	classname = get_name();
-	string	header;
-	string::size_type	start, end;
+	std::string	classname = get_name();
+	std::string	header;
 
 	//	Put title
 	Tango::DbDatum	title("ProjectTitle");
-	string	str_title("Device server for XIMC controller");
+	std::string	str_title("Device server for XIMC controller");
 	title << str_title;
 	data.push_back(title);
 
 	//	Put Description
 	Tango::DbDatum	description("Description");
-	vector<string>	str_desc;
+	std::vector<std::string>	str_desc;
 	str_desc.push_back("Device server for XIMC controllers like Standa 8SMC4-USB");
 	description << str_desc;
 	data.push_back(description);
 
 	//  Put inheritance
 	Tango::DbDatum	inher_datum("InheritedFrom");
-	vector<string> inheritance;
+	std::vector<std::string> inheritance;
 	inheritance.push_back("TANGO_BASE_CLASS");
 	inher_datum << inheritance;
 	data.push_back(inher_datum);
@@ -523,7 +662,7 @@ void XIMCSrvClass::device_factory(const Tango::DevVarStringArray *devlist_ptr)
 	//	Create devices and add it into the device list
 	for (unsigned long i=0 ; i<devlist_ptr->length() ; i++)
 	{
-		cout4 << "Device name : " << (*devlist_ptr)[i].in() << endl;
+		cout4 << "Device name : " << (*devlist_ptr)[i].in() << std::endl;
 		device_list.push_back(new XIMCSrv(this, (*devlist_ptr)[i]));
 	}
 
@@ -557,7 +696,7 @@ void XIMCSrvClass::device_factory(const Tango::DevVarStringArray *devlist_ptr)
  *                and store them in the attribute list
  */
 //--------------------------------------------------------
-void XIMCSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
+void XIMCSrvClass::attribute_factory(std::vector<Tango::Attr *> &att_list)
 {
 	/*----- PROTECTED REGION ID(XIMCSrvClass::attribute_factory_before) ENABLED START -----*/
 
@@ -621,9 +760,9 @@ void XIMCSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	Tango::UserDefaultAttrProp	temperature_prop;
 	temperature_prop.set_description("Controller temperature");
 	temperature_prop.set_label("Temperature");
-	temperature_prop.set_unit("°C");
-	temperature_prop.set_standard_unit("°C");
-	temperature_prop.set_display_unit("°C");
+	temperature_prop.set_unit("Â°C");
+	temperature_prop.set_standard_unit("Â°C");
+	temperature_prop.set_display_unit("Â°C");
 	temperature_prop.set_format("%.1f");
 	//	max_value	not set for Temperature
 	//	min_value	not set for Temperature
@@ -767,30 +906,89 @@ void XIMCSrvClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	pwrcurrent->set_change_event(true, false);
 	att_list.push_back(pwrcurrent);
 
-	//	Attribute : PositionEnc
-	PositionEncAttrib	*positionenc = new PositionEncAttrib();
-	Tango::UserDefaultAttrProp	positionenc_prop;
-	positionenc_prop.set_description("Encoder position");
-	positionenc_prop.set_label("Encoder");
-	positionenc_prop.set_unit("counts");
-	positionenc_prop.set_standard_unit("counts");
-	positionenc_prop.set_display_unit("counts");
-	positionenc_prop.set_format("%d");
-	//	max_value	not set for PositionEnc
-	//	min_value	not set for PositionEnc
-	//	max_alarm	not set for PositionEnc
-	//	min_alarm	not set for PositionEnc
-	//	max_warning	not set for PositionEnc
-	//	min_warning	not set for PositionEnc
-	//	delta_t	not set for PositionEnc
-	//	delta_val	not set for PositionEnc
+	//	Attribute : FirmwareVersion
+	FirmwareVersionAttrib	*firmwareversion = new FirmwareVersionAttrib();
+	Tango::UserDefaultAttrProp	firmwareversion_prop;
+	//	description	not set for FirmwareVersion
+	firmwareversion_prop.set_label("Firmware version");
+	//	unit	not set for FirmwareVersion
+	//	standard_unit	not set for FirmwareVersion
+	//	display_unit	not set for FirmwareVersion
+	//	format	not set for FirmwareVersion
+	//	max_value	not set for FirmwareVersion
+	//	min_value	not set for FirmwareVersion
+	//	max_alarm	not set for FirmwareVersion
+	//	min_alarm	not set for FirmwareVersion
+	//	max_warning	not set for FirmwareVersion
+	//	min_warning	not set for FirmwareVersion
+	//	delta_t	not set for FirmwareVersion
+	//	delta_val	not set for FirmwareVersion
 	
-	positionenc->set_default_properties(positionenc_prop);
+	firmwareversion->set_default_properties(firmwareversion_prop);
 	//	Not Polled
-	positionenc->set_disp_level(Tango::OPERATOR);
+	firmwareversion->set_disp_level(Tango::OPERATOR);
 	//	Not Memorized
-	positionenc->set_change_event(true, false);
-	att_list.push_back(positionenc);
+	att_list.push_back(firmwareversion);
+
+	//	Attribute : PowerState
+	PowerStateAttrib	*powerstate = new PowerStateAttrib();
+	Tango::UserDefaultAttrProp	powerstate_prop;
+	//	description	not set for PowerState
+	//	label	not set for PowerState
+	//	unit	not set for PowerState
+	//	standard_unit	not set for PowerState
+	//	display_unit	not set for PowerState
+	//	format	not set for PowerState
+	//	max_value	not set for PowerState
+	//	min_value	not set for PowerState
+	//	max_alarm	not set for PowerState
+	//	min_alarm	not set for PowerState
+	//	max_warning	not set for PowerState
+	//	min_warning	not set for PowerState
+	//	delta_t	not set for PowerState
+	//	delta_val	not set for PowerState
+	
+	{
+		vector<std::string> labels;
+		labels.push_back("Unknown");
+		labels.push_back("Off");
+		labels.push_back("Undefined");
+		labels.push_back("Normal");
+		labels.push_back("Reduced");
+		labels.push_back("Maximum");
+		powerstate_prop.set_enum_labels(labels);
+	}
+	powerstate->set_default_properties(powerstate_prop);
+	//	Not Polled
+	powerstate->set_disp_level(Tango::OPERATOR);
+	//	Not Memorized
+	powerstate->set_change_event(true, false);
+	att_list.push_back(powerstate);
+
+	//	Attribute : Referenced
+	ReferencedAttrib	*referenced = new ReferencedAttrib();
+	Tango::UserDefaultAttrProp	referenced_prop;
+	//	description	not set for Referenced
+	//	label	not set for Referenced
+	//	unit	not set for Referenced
+	//	standard_unit	not set for Referenced
+	//	display_unit	not set for Referenced
+	//	format	not set for Referenced
+	//	max_value	not set for Referenced
+	//	min_value	not set for Referenced
+	//	max_alarm	not set for Referenced
+	//	min_alarm	not set for Referenced
+	//	max_warning	not set for Referenced
+	//	min_warning	not set for Referenced
+	//	delta_t	not set for Referenced
+	//	delta_val	not set for Referenced
+	
+	referenced->set_default_properties(referenced_prop);
+	//	Not Polled
+	referenced->set_disp_level(Tango::OPERATOR);
+	//	Not Memorized
+	referenced->set_change_event(true, false);
+	att_list.push_back(referenced);
 
 
 	//	Create a list of static attributes
@@ -836,6 +1034,10 @@ void XIMCSrvClass::command_factory()
 
 	/*----- PROTECTED REGION END -----*/	//	XIMCSrvClass::command_factory_before
 
+	//	Set polling perod for command State
+	Tango::Command	&stateCmd = get_cmd_by_name("State");
+	stateCmd.set_polling_period(500);
+	
 
 	//	Command GoHome
 	GoHomeClass	*pGoHomeCmd =
@@ -858,8 +1060,8 @@ void XIMCSrvClass::command_factory()
 	//	Command MoveAbsolute
 	MoveAbsoluteClass	*pMoveAbsoluteCmd =
 		new MoveAbsoluteClass("MoveAbsolute",
-			Tango::DEV_FLOAT, Tango::DEV_VOID,
-			"Position (steps)",
+			Tango::DEV_DOUBLE, Tango::DEV_VOID,
+			"Position",
 			"",
 			Tango::OPERATOR);
 	command_list.push_back(pMoveAbsoluteCmd);
@@ -867,8 +1069,8 @@ void XIMCSrvClass::command_factory()
 	//	Command MoveRelative
 	MoveRelativeClass	*pMoveRelativeCmd =
 		new MoveRelativeClass("MoveRelative",
-			Tango::DEV_FLOAT, Tango::DEV_VOID,
-			"Position (steps)",
+			Tango::DEV_DOUBLE, Tango::DEV_VOID,
+			"Position",
 			"",
 			Tango::OPERATOR);
 	command_list.push_back(pMoveRelativeCmd);
@@ -937,16 +1139,16 @@ void XIMCSrvClass::command_factory()
  * @param	att_list	the ceated attribute list
  */
 //--------------------------------------------------------
-void XIMCSrvClass::create_static_attribute_list(vector<Tango::Attr *> &att_list)
+void XIMCSrvClass::create_static_attribute_list(std::vector<Tango::Attr *> &att_list)
 {
 	for (unsigned long i=0 ; i<att_list.size() ; i++)
 	{
-		string att_name(att_list[i]->get_name());
+		std::string att_name(att_list[i]->get_name());
 		transform(att_name.begin(), att_name.end(), att_name.begin(), ::tolower);
 		defaultAttList.push_back(att_name);
 	}
 
-	cout2 << defaultAttList.size() << " attributes in default list" << endl;
+	cout2 << defaultAttList.size() << " attributes in default list" << std::endl;
 
 	/*----- PROTECTED REGION ID(XIMCSrvClass::create_static_att_list) ENABLED START -----*/
 
@@ -963,26 +1165,26 @@ void XIMCSrvClass::create_static_attribute_list(vector<Tango::Attr *> &att_list)
  * @param	list of all attributes
  */
 //--------------------------------------------------------
-void XIMCSrvClass::erase_dynamic_attributes(const Tango::DevVarStringArray *devlist_ptr, vector<Tango::Attr *> &att_list)
+void XIMCSrvClass::erase_dynamic_attributes(const Tango::DevVarStringArray *devlist_ptr, std::vector<Tango::Attr *> &att_list)
 {
 	Tango::Util *tg = Tango::Util::instance();
 
 	for (unsigned long i=0 ; i<devlist_ptr->length() ; i++)
 	{
-		Tango::DeviceImpl *dev_impl = tg->get_device_by_name(((string)(*devlist_ptr)[i]).c_str());
+		Tango::DeviceImpl *dev_impl = tg->get_device_by_name(((std::string)(*devlist_ptr)[i]).c_str());
 		XIMCSrv *dev = static_cast<XIMCSrv *> (dev_impl);
 
-		vector<Tango::Attribute *> &dev_att_list = dev->get_device_attr()->get_attribute_list();
-		vector<Tango::Attribute *>::iterator ite_att;
+		std::vector<Tango::Attribute *> &dev_att_list = dev->get_device_attr()->get_attribute_list();
+		std::vector<Tango::Attribute *>::iterator ite_att;
 		for (ite_att=dev_att_list.begin() ; ite_att != dev_att_list.end() ; ++ite_att)
 		{
-			string att_name((*ite_att)->get_name_lower());
+			std::string att_name((*ite_att)->get_name_lower());
 			if ((att_name == "state") || (att_name == "status"))
 				continue;
-			vector<string>::iterator ite_str = find(defaultAttList.begin(), defaultAttList.end(), att_name);
+			std::vector<std::string>::iterator ite_str = find(defaultAttList.begin(), defaultAttList.end(), att_name);
 			if (ite_str == defaultAttList.end())
 			{
-				cout2 << att_name << " is a UNWANTED dynamic attribute for device " << (*devlist_ptr)[i] << endl;
+				cout2 << att_name << " is a UNWANTED dynamic attribute for device " << (*devlist_ptr)[i] << std::endl;
 				Tango::Attribute &att = dev->get_device_attr()->get_attr_by_name(att_name.c_str());
 				dev->remove_attribute(att_list[att.get_attr_idx()], true, false);
 				--ite_att;
@@ -996,13 +1198,13 @@ void XIMCSrvClass::erase_dynamic_attributes(const Tango::DevVarStringArray *devl
 
 //--------------------------------------------------------
 /**
- *	Method      : XIMCSrvClass::get_attr_by_name()
+ *	Method      : XIMCSrvClass::get_attr_object_by_name()
  *	Description : returns Tango::Attr * object found by name
  */
 //--------------------------------------------------------
-Tango::Attr *XIMCSrvClass::get_attr_object_by_name(vector<Tango::Attr *> &att_list, string attname)
+Tango::Attr *XIMCSrvClass::get_attr_object_by_name(std::vector<Tango::Attr *> &att_list, std::string attname)
 {
-	vector<Tango::Attr *>::iterator it;
+	std::vector<Tango::Attr *>::iterator it;
 	for (it=att_list.begin() ; it<att_list.end() ; ++it)
 		if ((*it)->get_name()==attname)
 			return (*it);

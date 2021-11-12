@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="ASCII"?>
 <pogoDsl:PogoSystem xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pogoDsl="http://www.esrf.fr/tango/pogo/PogoDsl">
-  <classes name="XIMCSrv" pogoRevision="9.4">
+  <classes name="XIMCSrv" pogoRevision="9.7">
     <description description="Device server for XIMC controllers like Standa 8SMC4-USB" title="Device server for XIMC controller" sourcePath="/home/wyrdmeister/Documents/Development/Projects/Udyni/TangoDevices/XIMCSrv" language="Cpp" filestogenerate="XMI   file,Code files,Protected Regions" license="GPL" hasMandatoryProperty="true" hasConcreteProperty="true" hasAbstractCommand="false" hasAbstractAttribute="false">
       <inheritances classname="Device_Impl" sourcePath=""/>
       <identification contact="at mail.polimi.it - michele.devetta" author="michele.devetta" emailDomain="mail.polimi.it" classFamily="Motion" siteSpecific="" platform="Unix Like" bus="Not Applicable" manufacturer="STANDA Ltd." reference="XIMC"/>
     </description>
-    <deviceProperties name="Proxy" mandatory="true" description="Communication Tango device">
+    <deviceProperties name="SerialNumber" mandatory="true" description="XIMC device serial number">
       <type xsi:type="pogoDsl:StringType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </deviceProperties>
@@ -14,29 +14,79 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>true</DefaultPropValue>
     </deviceProperties>
-    <deviceProperties name="FirstHomingSpeed" description="Speed for the first search of the home position (if SecondHomingSpeed is zero this is the only one used!)">
-      <type xsi:type="pogoDsl:IntType"/>
-      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <DefaultPropValue>100</DefaultPropValue>
-    </deviceProperties>
-    <deviceProperties name="SecondHomingSpeed" description="Speed for the second, much finer, search of the home position (set to zero to disable second search))">
-      <type xsi:type="pogoDsl:IntType"/>
-      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <DefaultPropValue>0</DefaultPropValue>
-    </deviceProperties>
     <deviceProperties name="Polling" description="Polling period in ms">
       <type xsi:type="pogoDsl:UIntType"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <DefaultPropValue>1000</DefaultPropValue>
     </deviceProperties>
-    <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="0">
+    <deviceProperties name="Conversion" description="Conversion of steps to physical units">
+      <type xsi:type="pogoDsl:DoubleType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>1.0</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="ConversionEnc" description="Conversion of encoder counts to physical units">
+      <type xsi:type="pogoDsl:DoubleType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>1.0</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="UseEncoder" description="Enable the use of the encoder">
+      <type xsi:type="pogoDsl:BooleanType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>false</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="Units" description="Units for position (for velocity will be units/s, for acceleration units/s^2)">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>mm</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="PositionFormat" description="Format string for stage position">
+      <type xsi:type="pogoDsl:StringType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>%.3f</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="FirstHomingSpeed" description="Speed of the first homing move for the standard protocol (step/s)">
+      <type xsi:type="pogoDsl:IntType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>500</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="SecondHomingSpeed" description="Speed of the second homing move for the standard algorithm (step/s).&#xA;If the Fast Homing Algorithm is enabled, is the speed of the homing operation.">
+      <type xsi:type="pogoDsl:IntType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>10</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="UseFastAlgorithm" description="Use fast homing algorithm">
+      <type xsi:type="pogoDsl:BooleanType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>true</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="HomingDirection" description="Homing move direction: false for left, true for right (default left, i.e. negative direction))">
+      <type xsi:type="pogoDsl:BooleanType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>false</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="BlindMoveBeforeHoming" description="Move by this relative amount (in user units) before starting home search">
+      <type xsi:type="pogoDsl:DoubleType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>0.0</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="HomingDelta" description="Move to reach home position after limit swith trigger.">
+      <type xsi:type="pogoDsl:IntType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>0</DefaultPropValue>
+    </deviceProperties>
+    <deviceProperties name="PositionAtHome" description="Position value at home">
+      <type xsi:type="pogoDsl:DoubleType"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <DefaultPropValue>0</DefaultPropValue>
+    </deviceProperties>
+    <commands name="State" description="This command gets the device state (stored in its device_state data member) and returns it to the caller." execMethod="dev_state" displayLevel="OPERATOR" polledPeriod="500" isDynamic="false">
       <argin description="none">
         <type xsi:type="pogoDsl:VoidType"/>
       </argin>
       <argout description="Device state">
         <type xsi:type="pogoDsl:StateType"/>
       </argout>
-      <status abstract="true" inherited="true" concrete="true"/>
+      <status abstract="true" inherited="true" concrete="true" concreteHere="false"/>
     </commands>
     <commands name="Status" description="This command gets the device status (stored in its device_status data member) and returns it to the caller." execMethod="dev_status" displayLevel="OPERATOR" polledPeriod="0">
       <argin description="none">
@@ -65,18 +115,18 @@
       </argout>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </commands>
-    <commands name="MoveAbsolute" description="Move to an absolute position" execMethod="move_absolute" displayLevel="OPERATOR" polledPeriod="0">
-      <argin description="Position (steps)">
-        <type xsi:type="pogoDsl:FloatType"/>
+    <commands name="MoveAbsolute" description="Move to an absolute position" execMethod="move_absolute" displayLevel="OPERATOR" polledPeriod="0" isDynamic="false">
+      <argin description="Position">
+        <type xsi:type="pogoDsl:DoubleType"/>
       </argin>
       <argout description="">
         <type xsi:type="pogoDsl:VoidType"/>
       </argout>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </commands>
-    <commands name="MoveRelative" description="Move to an relative position" execMethod="move_relative" displayLevel="OPERATOR" polledPeriod="0">
-      <argin description="Position (steps)">
-        <type xsi:type="pogoDsl:FloatType"/>
+    <commands name="MoveRelative" description="Move to an relative position" execMethod="move_relative" displayLevel="OPERATOR" polledPeriod="0" isDynamic="false">
+      <argin description="Position">
+        <type xsi:type="pogoDsl:DoubleType"/>
       </argin>
       <argout description="">
         <type xsi:type="pogoDsl:VoidType"/>
@@ -129,7 +179,7 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
     </commands>
     <attributes name="Position" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
-      <dataType xsi:type="pogoDsl:FloatType"/>
+      <dataType xsi:type="pogoDsl:DoubleType"/>
       <changeEvent fire="true" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
       <dataReadyEvent fire="false" libCheckCriteria="true"/>
@@ -137,7 +187,7 @@
       <properties description="Position in steps" label="Position" unit="steps" standardUnit="steps" displayUnit="steps" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <attributes name="Velocity" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
-      <dataType xsi:type="pogoDsl:FloatType"/>
+      <dataType xsi:type="pogoDsl:DoubleType"/>
       <changeEvent fire="true" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
       <dataReadyEvent fire="false" libCheckCriteria="true"/>
@@ -153,7 +203,7 @@
       <properties description="Controller temperature" label="Temperature" unit="&#xb0;C" standardUnit="&#xb0;C" displayUnit="&#xb0;C" format="%.1f" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <attributes name="Acceleration" attType="Scalar" rwType="READ_WRITE" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" memorized="true" allocReadMember="true" isDynamic="false">
-      <dataType xsi:type="pogoDsl:UShortType"/>
+      <dataType xsi:type="pogoDsl:DoubleType"/>
       <changeEvent fire="true" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
       <dataReadyEvent fire="false" libCheckCriteria="true"/>
@@ -192,13 +242,35 @@
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
       <properties description="Motor supply current consumption" label="Power current" unit="mA" standardUnit="mA" displayUnit="mA" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
-    <attributes name="PositionEnc" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
-      <dataType xsi:type="pogoDsl:LongType"/>
+    <attributes name="FirmwareVersion" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:StringType"/>
+      <changeEvent fire="false" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="Firmware version" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+    </attributes>
+    <attributes name="PowerState" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:EnumType"/>
       <changeEvent fire="true" libCheckCriteria="false"/>
       <archiveEvent fire="false" libCheckCriteria="false"/>
       <dataReadyEvent fire="false" libCheckCriteria="true"/>
       <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
-      <properties description="Encoder position" label="Encoder" unit="counts" standardUnit="counts" displayUnit="counts" format="%d" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <properties description="" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
+      <enumLabels>Unknown</enumLabels>
+      <enumLabels>Off</enumLabels>
+      <enumLabels>Undefined</enumLabels>
+      <enumLabels>Normal</enumLabels>
+      <enumLabels>Reduced</enumLabels>
+      <enumLabels>Maximum</enumLabels>
+    </attributes>
+    <attributes name="Referenced" attType="Scalar" rwType="READ" displayLevel="OPERATOR" polledPeriod="0" maxX="" maxY="" allocReadMember="true" isDynamic="false">
+      <dataType xsi:type="pogoDsl:BooleanType"/>
+      <changeEvent fire="true" libCheckCriteria="false"/>
+      <archiveEvent fire="false" libCheckCriteria="false"/>
+      <dataReadyEvent fire="false" libCheckCriteria="true"/>
+      <status abstract="false" inherited="false" concrete="true" concreteHere="true"/>
+      <properties description="" label="" unit="" standardUnit="" displayUnit="" format="" maxValue="" minValue="" maxAlarm="" minAlarm="" maxWarning="" minWarning="" deltaTime="" deltaValue=""/>
     </attributes>
     <preferences docHome="./doc_html" makefileHome="$(TANGO_HOME)"/>
   </classes>

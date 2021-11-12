@@ -65,7 +65,7 @@ class PositionAttrib: public Tango::Attr
 {
 public:
 	PositionAttrib():Attr("Position",
-			Tango::DEV_FLOAT, Tango::READ_WRITE) {};
+			Tango::DEV_DOUBLE, Tango::READ_WRITE) {};
 	~PositionAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
 		{(static_cast<XIMCSrv *>(dev))->read_Position(att);}
@@ -80,7 +80,7 @@ class VelocityAttrib: public Tango::Attr
 {
 public:
 	VelocityAttrib():Attr("Velocity",
-			Tango::DEV_FLOAT, Tango::READ_WRITE) {};
+			Tango::DEV_DOUBLE, Tango::READ_WRITE) {};
 	~VelocityAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
 		{(static_cast<XIMCSrv *>(dev))->read_Velocity(att);}
@@ -108,7 +108,7 @@ class AccelerationAttrib: public Tango::Attr
 {
 public:
 	AccelerationAttrib():Attr("Acceleration",
-			Tango::DEV_USHORT, Tango::READ_WRITE) {};
+			Tango::DEV_DOUBLE, Tango::READ_WRITE) {};
 	~AccelerationAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
 		{(static_cast<XIMCSrv *>(dev))->read_Acceleration(att);}
@@ -170,17 +170,45 @@ public:
 		{return (static_cast<XIMCSrv *>(dev))->is_PwrCurrent_allowed(ty);}
 };
 
-//	Attribute PositionEnc class definition
-class PositionEncAttrib: public Tango::Attr
+//	Attribute FirmwareVersion class definition
+class FirmwareVersionAttrib: public Tango::Attr
 {
 public:
-	PositionEncAttrib():Attr("PositionEnc",
-			Tango::DEV_LONG64, Tango::READ) {};
-	~PositionEncAttrib() {};
+	FirmwareVersionAttrib():Attr("FirmwareVersion",
+			Tango::DEV_STRING, Tango::READ) {};
+	~FirmwareVersionAttrib() {};
 	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
-		{(static_cast<XIMCSrv *>(dev))->read_PositionEnc(att);}
+		{(static_cast<XIMCSrv *>(dev))->read_FirmwareVersion(att);}
 	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
-		{return (static_cast<XIMCSrv *>(dev))->is_PositionEnc_allowed(ty);}
+		{return (static_cast<XIMCSrv *>(dev))->is_FirmwareVersion_allowed(ty);}
+};
+
+//	Attribute PowerState class definition
+class PowerStateAttrib: public Tango::Attr
+{
+public:
+	PowerStateAttrib():Attr("PowerState",
+			Tango::DEV_ENUM, Tango::READ) {};
+	~PowerStateAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<XIMCSrv *>(dev))->read_PowerState(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<XIMCSrv *>(dev))->is_PowerState_allowed(ty);}
+	virtual bool same_type(const type_info &in_type) {return typeid(PowerStateEnum) == in_type;}
+	virtual std::string get_enum_type() {return std::string("PowerStateEnum");}
+};
+
+//	Attribute Referenced class definition
+class ReferencedAttrib: public Tango::Attr
+{
+public:
+	ReferencedAttrib():Attr("Referenced",
+			Tango::DEV_BOOLEAN, Tango::READ) {};
+	~ReferencedAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<XIMCSrv *>(dev))->read_Referenced(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<XIMCSrv *>(dev))->is_Referenced_allowed(ty);}
 };
 
 
@@ -420,28 +448,28 @@ class XIMCSrvClass : public Tango::DeviceClass
 		static XIMCSrvClass *init(const char *);
 		static XIMCSrvClass *instance();
 		~XIMCSrvClass();
-		Tango::DbDatum	get_class_property(string &);
-		Tango::DbDatum	get_default_device_property(string &);
-		Tango::DbDatum	get_default_class_property(string &);
+		Tango::DbDatum	get_class_property(std::string &);
+		Tango::DbDatum	get_default_device_property(std::string &);
+		Tango::DbDatum	get_default_class_property(std::string &);
 	
 	protected:
-		XIMCSrvClass(string &);
+		XIMCSrvClass(std::string &);
 		static XIMCSrvClass *_instance;
 		void command_factory();
-		void attribute_factory(vector<Tango::Attr *> &);
+		void attribute_factory(std::vector<Tango::Attr *> &);
 		void pipe_factory();
 		void write_class_property();
 		void set_default_property();
 		void get_class_property();
-		string get_cvstag();
-		string get_cvsroot();
+		std::string get_cvstag();
+		std::string get_cvsroot();
 	
 	private:
 		void device_factory(const Tango::DevVarStringArray *);
-		void create_static_attribute_list(vector<Tango::Attr *> &);
-		void erase_dynamic_attributes(const Tango::DevVarStringArray *,vector<Tango::Attr *> &);
-		vector<string>	defaultAttList;
-		Tango::Attr *get_attr_object_by_name(vector<Tango::Attr *> &att_list, string attname);
+		void create_static_attribute_list(std::vector<Tango::Attr *> &);
+		void erase_dynamic_attributes(const Tango::DevVarStringArray *,std::vector<Tango::Attr *> &);
+		std::vector<std::string>	defaultAttList;
+		Tango::Attr *get_attr_object_by_name(std::vector<Tango::Attr *> &att_list, std::string attname);
 };
 
 }	//	End of namespace

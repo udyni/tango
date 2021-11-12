@@ -43,7 +43,9 @@
 #include <omnithread.h>
 #include <sstream>
 #include <iomanip>
-#include "ximc_protocol.h"
+#include <locale>
+#include <codecvt>
+#include <ximc.h>
 
 #define XIMC_MAX_RETRY 4
 
@@ -62,6 +64,16 @@
 
 namespace XIMCSrv_ns
 {
+enum _PowerStateEnum {
+	_UNKNOWN,
+	_OFF,
+	_UNDEFINED,
+	_NORMAL,
+	_REDUCED,
+	_MAXIMUM,
+} ;
+typedef _PowerStateEnum PowerStateEnum;
+
 /*----- PROTECTED REGION ID(XIMCSrv::Additional Class Declarations) ENABLED START -----*/
 
 //	Additional Class Declarations
@@ -83,30 +95,53 @@ private:
 
 //	Device property data members
 public:
-	//	Proxy:	Communication Tango device
-	string	proxy;
+	//	SerialNumber:	XIMC device serial number
+	std::string	serialNumber;
 	//	Referenced:	If set to true at init the stage will search for it`s home position and set it to zero, then move to the last saved position.
 	Tango::DevBoolean	referenced;
-	//	FirstHomingSpeed:	Speed for the first search of the home position (if SecondHomingSpeed is zero this is the only one used!)
-	Tango::DevLong	firstHomingSpeed;
-	//	SecondHomingSpeed:	Speed for the second, much finer, search of the home position (set to zero to disable second search))
-	Tango::DevLong	secondHomingSpeed;
 	//	Polling:	Polling period in ms
 	Tango::DevULong	polling;
+	//	Conversion:	Conversion of steps to physical units
+	Tango::DevDouble	conversion;
+	//	ConversionEnc:	Conversion of encoder counts to physical units
+	Tango::DevDouble	conversionEnc;
+	//	UseEncoder:	Enable the use of the encoder
+	Tango::DevBoolean	useEncoder;
+	//	Units:	Units for position (for velocity will be units/s, for acceleration units/s^2)
+	std::string	units;
+	//	PositionFormat:	Format string for stage position
+	std::string	positionFormat;
+	//	FirstHomingSpeed:	Speed of the first homing move for the standard protocol (step/s)
+	Tango::DevLong	firstHomingSpeed;
+	//	SecondHomingSpeed:	Speed of the second homing move for the standard algorithm (step/s).
+	//  If the Fast Homing Algorithm is enabled, is the speed of the homing operation.
+	Tango::DevLong	secondHomingSpeed;
+	//	UseFastAlgorithm:	Use fast homing algorithm
+	Tango::DevBoolean	useFastAlgorithm;
+	//	HomingDirection:	Homing move direction: false for left, true for right (default left, i.e. negative direction))
+	Tango::DevBoolean	homingDirection;
+	//	BlindMoveBeforeHoming:	Move by this relative amount (in user units) before starting home search
+	Tango::DevDouble	blindMoveBeforeHoming;
+	//	HomingDelta:	Move to reach home position after limit swith trigger.
+	Tango::DevLong	homingDelta;
+	//	PositionAtHome:	Position value at home
+	Tango::DevDouble	positionAtHome;
 
 	bool	mandatoryNotDefined;
 
 //	Attribute data members
 public:
-	Tango::DevFloat	*attr_Position_read;
-	Tango::DevFloat	*attr_Velocity_read;
+	Tango::DevDouble	*attr_Position_read;
+	Tango::DevDouble	*attr_Velocity_read;
 	Tango::DevFloat	*attr_Temperature_read;
-	Tango::DevUShort	*attr_Acceleration_read;
+	Tango::DevDouble	*attr_Acceleration_read;
 	Tango::DevFloat	*attr_USBvoltage_read;
 	Tango::DevLong	*attr_USBcurrent_read;
 	Tango::DevFloat	*attr_PwrVoltage_read;
 	Tango::DevLong	*attr_PwrCurrent_read;
-	Tango::DevLong64	*attr_PositionEnc_read;
+	Tango::DevString	*attr_FirmwareVersion_read;
+	PowerStateEnum	*attr_PowerState_read;
+	Tango::DevBoolean	*attr_Referenced_read;
 
 //	Constructors and destructors
 public:
@@ -116,7 +151,7 @@ public:
 	 *	@param cl	Class.
 	 *	@param s 	Device Name
 	 */
-	XIMCSrv(Tango::DeviceClass *cl,string &s);
+	XIMCSrv(Tango::DeviceClass *cl,std::string &s);
 	/**
 	 * Constructs a newly device object.
 	 *
@@ -170,20 +205,20 @@ public:
 	 *	Description : Hardware acquisition for attributes.
 	 */
 	//--------------------------------------------------------
-	virtual void read_attr_hardware(vector<long> &attr_list);
+	virtual void read_attr_hardware(std::vector<long> &attr_list);
 	//--------------------------------------------------------
 	/*
 	 *	Method      : XIMCSrv::write_attr_hardware()
 	 *	Description : Hardware writing for attributes.
 	 */
 	//--------------------------------------------------------
-	virtual void write_attr_hardware(vector<long> &attr_list);
+	virtual void write_attr_hardware(std::vector<long> &attr_list);
 
 /**
  *	Attribute Position related methods
  *	Description: Position in steps
  *
- *	Data type:	Tango::DevFloat
+ *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
  */
 	virtual void read_Position(Tango::Attribute &attr);
@@ -193,7 +228,7 @@ public:
  *	Attribute Velocity related methods
  *	Description: Velocity in steps/s
  *
- *	Data type:	Tango::DevFloat
+ *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
  */
 	virtual void read_Velocity(Tango::Attribute &attr);
@@ -212,7 +247,7 @@ public:
  *	Attribute Acceleration related methods
  *	Description: Acceleration and deceleration
  *
- *	Data type:	Tango::DevUShort
+ *	Data type:	Tango::DevDouble
  *	Attr type:	Scalar
  */
 	virtual void read_Acceleration(Tango::Attribute &attr);
@@ -255,14 +290,32 @@ public:
 	virtual void read_PwrCurrent(Tango::Attribute &attr);
 	virtual bool is_PwrCurrent_allowed(Tango::AttReqType type);
 /**
- *	Attribute PositionEnc related methods
- *	Description: Encoder position
+ *	Attribute FirmwareVersion related methods
+ *	Description:
  *
- *	Data type:	Tango::DevLong64
+ *	Data type:	Tango::DevString
  *	Attr type:	Scalar
  */
-	virtual void read_PositionEnc(Tango::Attribute &attr);
-	virtual bool is_PositionEnc_allowed(Tango::AttReqType type);
+	virtual void read_FirmwareVersion(Tango::Attribute &attr);
+	virtual bool is_FirmwareVersion_allowed(Tango::AttReqType type);
+/**
+ *	Attribute PowerState related methods
+ *	Description:
+ *
+ *	Data type:	Tango::DevEnum
+ *	Attr type:	Scalar
+ */
+	virtual void read_PowerState(Tango::Attribute &attr);
+	virtual bool is_PowerState_allowed(Tango::AttReqType type);
+/**
+ *	Attribute Referenced related methods
+ *	Description:
+ *
+ *	Data type:	Tango::DevBoolean
+ *	Attr type:	Scalar
+ */
+	virtual void read_Referenced(Tango::Attribute &attr);
+	virtual bool is_Referenced_allowed(Tango::AttReqType type);
 
 
 	//--------------------------------------------------------
@@ -296,17 +349,17 @@ public:
 	 *	Command MoveAbsolute related method
 	 *	Description: Move to an absolute position
 	 *
-	 *	@param argin Position (steps)
+	 *	@param argin Position
 	 */
-	virtual void move_absolute(Tango::DevFloat argin);
+	virtual void move_absolute(Tango::DevDouble argin);
 	virtual bool is_MoveAbsolute_allowed(const CORBA::Any &any);
 	/**
 	 *	Command MoveRelative related method
 	 *	Description: Move to an relative position
 	 *
-	 *	@param argin Position (steps)
+	 *	@param argin Position
 	 */
-	virtual void move_relative(Tango::DevFloat argin);
+	virtual void move_relative(Tango::DevDouble argin);
 	virtual bool is_MoveRelative_allowed(const CORBA::Any &any);
 	/**
 	 *	Command PowerOff related method
@@ -363,10 +416,10 @@ public:
 /*----- PROTECTED REGION ID(XIMCSrv::Additional Classes Definitions) ENABLED START -----*/
 
 //	Additional Classes Definitions
-class XIMCThread : public omni_thread, protected XIMCProtocolHandler {
+class XIMCThread : public omni_thread {
 public:
-	XIMCThread(const char* device, XIMCSrv *parent);
-	XIMCThread(string device, XIMCSrv *parent);
+	XIMCThread(const std::string &serial, XIMCSrv *parent);
+	~XIMCThread();
 
 	// Command STOP: stop all movements immediately
 	void stop();
@@ -375,12 +428,10 @@ public:
 	void powerOff();
 
 	// Command MOVE: absolute move
-	void moveAbs(float fpos);
-	void moveAbs(const position_t &pos);
+	void moveAbs(double fpos);
 
 	// Command MOVR: relative move
-	void moveRel(float fpos);
-	void moveRel(const position_t &pos);
+	void moveRel(double fpos);
 
 	// Command HOME: go home
 	void goHome();
@@ -394,53 +445,11 @@ public:
 	// Command SSTP: soft stop (with deceleration)
 	void softStop();
 
-	// Command GPOS: get position
-	void getPosition(gposition_t& pos);
-
-	// Command SPOS: set position
-	void setPosition(const sposition_t& pos);
-
 	// Command ZERO: set current position as zero
 	void zero();
 
-	// Command READ: read settings from flash
-	void restoreSettings();
-
-	// Command SFBS: set feedback settings
-	void setFeedback(const feedback_settings_t& fb);
-
-	// Command SMOV: configure setup movement (speed, acceleration, threshold and etc)
-	void setMotionSettings(const move_settings_t& mov);
-
-	// Command SENG: set engine settings
-	void setEngineSettings(const engine_settings_t& eng);
-
-	// Command SHOM: set home settings
-	void setHomeSettings(const home_settings_t& home);
-
-	// Command GFBS: get feedback settings
-	const feedback_settings_t& getFeedback()const { return _feedback; }
-
-	// Command GMOV: read setup movement (speed, acceleration, threshold and etc)
-	const move_settings_t& getMotionSettings()const { return _motion; }
-
-	// Command GENG: read engine settings
-	const engine_settings_t& getEngineSettings()const { return _engine; }
-
-	// Command GHOM: read home settings
-	const home_settings_t& getHomeSettings()const { return _home; }
-
-	// Return status
-	const status_t& getStatus()const { return _status; }
-
 	// Terminate thread
 	void terminate() { _terminate = true; }
-
-	// Compute float position from status struct
-	float getStatusPos()const { return _st_pos; }
-
-	// Return encoder position from status
-	int64_t getStatusPosEnc()const { return _st_enc; }
 
 	// Return supply information from status struct
 	float getUSB_V()const { return _st_usb_v; }
@@ -451,60 +460,66 @@ public:
 	// Return controller temperature from status struct
 	float getTemperature()const { return _st_temp; }
 
-	// Update configuration structures
-	void updateConfig();
+	// Get stage position in physical units
+	double getPosition()const;
 
 	// Get current velocity
-	float getVelocity() { return float(_motion.speed) + float(_motion.uspeed) / 256.0; }
+	double getVelocity()const;
 
 	// Set current velocity
-	void setVelocity(float vel);
+	void setVelocity(double vel);
 
 	// Get current acceleration and deceleration
-	uint16_t getAcceleration() { return _motion.accel; }
+	double getAcceleration()const;
 
 	// Set current acceleration and deceleration
-	void setAcceleration(uint16_t acc);
+	void setAcceleration(double acc);
 
+	// Get motor power state
+	unsigned int getPowerState()const { return _power_state; }
 
+	// Return true if the stage is homed
+	bool isReferenced()const { return _is_homed; }
 
 protected:
-	// Command GETS: get controller status
-	void readStatus(status_t& s);
-
-	// Command GFBS: get feedback settings
-	void readFeedback(feedback_settings_t& fb);
-
-	// Command GMOV: read setup movement (speed, acceleration, threshold and etc)
-	void readMotionSettings(move_settings_t& mov);
-
-	// Command GENG: read engine settings
-	void readEngineSettings(engine_settings_t& eng);
-
-	// Command GHOM: read home settings
-	void readHomeSettings(home_settings_t& home);
-
-	// Search for home
+	// Search home routine
 	void searchHome();
 
-protected:
-	// Send a command to the controller
-	void sendCommand(uint32_t cmd, const uint8_t* payload, size_t payload_len, uint8_t *rsp_payload, size_t& rsp_len);
-
-	// Resynchronize communication with device
-	bool resync();
-
-	// Service function to convert command code to str
-	const char* cmd2string(uint32_t cmd);
-
-protected:
+	// Main polling thread
 	void* run_undetached(void *arg);
 
-	// Communication device
-	Tango::DeviceProxy *commdev;
+	// Initialize device
+	void init_device();
 
-	// Communication device mutex
-	omni_mutex _lock;
+	// Check that the device is open
+	void check_device();
+
+	// Close the device
+	void delete_device();
+
+	// Logging callback
+	static void logging_callback(int loglevel, const wchar_t* message, void* user_data);
+
+	// Check return code from libximc calls
+	void check_error_code(result_t code, const char* operation, const char* function);
+
+	// Conversion from steps to physical units
+	void convert_steps2phys(int32_t steps, int32_t usteps, double &phys)const;
+	void convert_steps2phys(uint32_t steps, uint32_t usteps, double &phys)const;
+
+	// Conversion from physical units to steps
+	void convert_phys2steps(double phys, int32_t &steps, int32_t &usteps)const;
+	void convert_phys2steps(double phys, uint32_t &steps, uint32_t &usteps)const;
+
+	// Wait for a move to finish
+	void waitForMove(int timeout);
+
+private:
+	// Device URI
+	std::string _device_uri;
+
+	// Device
+	device_t _dev;
 
 	// Terminate flag
 	bool _terminate;
@@ -512,32 +527,38 @@ protected:
 	// Parent device
 	XIMCSrv *_parent;
 
-	// Controller status
-	status_t _status;
+	// Flags and values from device properties
+	bool _referenced;
+	bool _encoder;
+	double _conv_steps;
+	double _conv_enc;
 
 	// Status variables for attributes
-	float _st_pos;
+	double _st_pos;
+	int _curr_pos;
+	int _curr_upos;
 	int64_t _st_enc;
 	float _st_usb_v;
 	Tango::DevLong _st_usb_i;
 	float _st_pwr_v;
 	Tango::DevLong _st_pwr_i;
 	float _st_temp;
+	bool _is_homed;
 
 	// Controller motion settings
 	move_settings_t _motion;
 
-	// Controller engine settings;
-	engine_settings_t _engine;
+	// Microstepping mode
+	uint16_t _microsteps;
 
-	// Controller feedback settings
-	feedback_settings_t _feedback;
-
-	// Controller homing settings
-	home_settings_t _home;
+	// Encoder feedback enabled
+	bool _enc_enabled;
 
 	// Home search requested
 	bool _home_search;
+
+	// Motor power state
+	Tango::DevShort _power_state;
 };
 
 

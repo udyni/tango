@@ -92,7 +92,7 @@ LIB_DIR_USER=
 # you must use '-lA -lB' in this order as link flags, otherwise you will get
 # 'undefined reference' errors
 #
-#LFLAGS_USR+=
+LFLAGS_USR+=-lximc
 
 
 #=============================================================================
@@ -131,9 +131,7 @@ include $(MAKE_ENV)/tango.opt
 #
 SVC_INCL =  $(PACKAGE_NAME).h $(PACKAGE_NAME)Class.h 
 
-ADDITIONAL_OBJS = \
-	$(OBJDIR)/ximc_protocol.o
-
+ADDITIONAL_OBJS = 
 
 SVC_OBJS =      \
         $(OBJDIR)/$(PACKAGE_NAME).o \

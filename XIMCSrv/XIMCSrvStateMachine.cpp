@@ -198,17 +198,49 @@ bool XIMCSrv::is_PwrCurrent_allowed(TANGO_UNUSED(Tango::AttReqType type))
 
 //--------------------------------------------------------
 /**
- *	Method      : XIMCSrv::is_PositionEnc_allowed()
- *	Description : Execution allowed for PositionEnc attribute
+ *	Method      : XIMCSrv::is_FirmwareVersion_allowed()
+ *	Description : Execution allowed for FirmwareVersion attribute
  */
 //--------------------------------------------------------
-bool XIMCSrv::is_PositionEnc_allowed(TANGO_UNUSED(Tango::AttReqType type))
+bool XIMCSrv::is_FirmwareVersion_allowed(TANGO_UNUSED(Tango::AttReqType type))
 {
 
-	//	Not any excluded states for PositionEnc attribute in read access.
-	/*----- PROTECTED REGION ID(XIMCSrv::PositionEncStateAllowed_READ) ENABLED START -----*/
+	//	Not any excluded states for FirmwareVersion attribute in read access.
+	/*----- PROTECTED REGION ID(XIMCSrv::FirmwareVersionStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	XIMCSrv::FirmwareVersionStateAllowed_READ
+	return true;
+}
 
-	/*----- PROTECTED REGION END -----*/	//	XIMCSrv::PositionEncStateAllowed_READ
+//--------------------------------------------------------
+/**
+ *	Method      : XIMCSrv::is_PowerState_allowed()
+ *	Description : Execution allowed for PowerState attribute
+ */
+//--------------------------------------------------------
+bool XIMCSrv::is_PowerState_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for PowerState attribute in read access.
+	/*----- PROTECTED REGION ID(XIMCSrv::PowerStateStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	XIMCSrv::PowerStateStateAllowed_READ
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : XIMCSrv::is_Referenced_allowed()
+ *	Description : Execution allowed for Referenced attribute
+ */
+//--------------------------------------------------------
+bool XIMCSrv::is_Referenced_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for Referenced attribute in read access.
+	/*----- PROTECTED REGION ID(XIMCSrv::ReferencedStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	XIMCSrv::ReferencedStateAllowed_READ
 	return true;
 }
 
