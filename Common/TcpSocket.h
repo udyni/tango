@@ -39,8 +39,8 @@ public:
 
 private:
 	//! Private copy constructor and private assignment operator to prevent class copying
-	TcpSocket(const TcpSocket& obj) : CommSocket() {};
-	TcpSocket& operator=(const TcpSocket& obj) {};
+	TcpSocket(const TcpSocket& obj);
+	TcpSocket& operator=(const TcpSocket& obj);
 
 public:
 	//! Destructor

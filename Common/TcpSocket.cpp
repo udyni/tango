@@ -28,8 +28,9 @@ void TcpSocket::init_connection(const char* device) {
 
 	// Split hostname and port
 	// 1) Copy the string
-	char *host = new char[strlen(device)+1];
-	strncpy(host, device, strlen(device)+1);
+    size_t len = strlen(device)+1;
+	char *host = new char[len];
+	strncpy(host, device, len);
 	// 2) Find separator
 	char *port_str = strchr(host, ':');
 	if(port_str == NULL)

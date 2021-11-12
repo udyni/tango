@@ -81,8 +81,8 @@ public:
 
 private:
 	//! Private copy constructor and private assignment operator to prevent base class copying
-	CommSocket(const CommSocket& obj) {};
-	CommSocket& operator=(const CommSocket& obj) {};
+	CommSocket(const CommSocket& obj);
+	CommSocket& operator=(const CommSocket& obj);
 
 public:
 	//! Destructor
@@ -118,31 +118,31 @@ public:
 
 private:
 	//! Check connection state. Should be overloaded.
-	virtual bool check_connection()const { return false; }
+	virtual bool check_connection()const = 0;
 
 	//! Connection stub. Should be overloaded
-	virtual void init_connection(const char* device) {};
+	virtual void init_connection(const char* device) = 0;
 
 	//! Disconnection stub. Should be overloaded
-	virtual void close_connection() {};
+	virtual void close_connection() = 0;
 
 	//! Read block of data. Should be overloaded
-	virtual int read_block(char *buffer, size_t sz) { return 0; };
+	virtual int read_block(char *buffer, size_t sz) = 0;
 
 	//! Read single char from buffer. Should be overloaded
-	virtual int read_char(char *buffer) { return 0; }
+	virtual int read_char(char *buffer) = 0;
 
 	//! Send block of data. Should be overloaded
-	virtual int send_block(const char *buffer, size_t sz) { return sz; };
+	virtual int send_block(const char *buffer, size_t sz) = 0;
 
 	//! Handle read error. Should be overloaded
-	virtual void _handle_error(int err) {};
+	virtual void _handle_error(int err) = 0;
 
 	//! Flush read buffer. Should be overloaded
-	virtual void flush_buffer() {};
+	virtual void flush_buffer() = 0;
 
 	//! Poll socket for data to read
-	virtual int poll(int timeout) {};
+	virtual int poll(int timeout) = 0;
 
 protected:
 	//! Reference count

@@ -35,8 +35,8 @@ public:
 
 private:
 	//! Private copy constructor and private assignment operator to prevent class copying
-	SerialSocket(const SerialSocket& obj) : CommSocket() {};
-	SerialSocket& operator=(const SerialSocket& obj) {};
+	SerialSocket(const SerialSocket& obj);
+	SerialSocket& operator=(const SerialSocket& obj);
 
 public:
 	//! Destructor
