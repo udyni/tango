@@ -31,7 +31,7 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
     polling = PTS.device_property(dtype=PT.DevULong, doc="Polling period in ms", default_value=500)
     ref_reverse = PTS.device_property(dtype=PT.DevBoolean, doc="Invert referencing direction", default_value=False)
     ref_movebefore = PTS.device_property(dtype=PT.DevDouble, doc="Relative move before starting referencing", default_value=0.0)
-    no_direct_control = PTS.device_propert(dtype=PT.DevBoolean, doc="Forbid direct control with SmaractGUI", default=False)
+    no_direct_control = PTS.device_property(dtype=PT.DevBoolean, doc="Forbid direct control with SmaractGUI", default_value=False)
 
 #    MoveMode = PTS.attribute(
 #                        label="Move mode", dtype=PT.DevEnum, enum_labels=MoveMode.getEnum(),
