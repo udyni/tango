@@ -12,17 +12,20 @@ NOTE: this version only support the ethernet version
 
 import time
 import socket
+import threading
+import numpy as np
 import PyTango as PT
 import PyTango.server as PTS
-from SmarActUtils import MoveMode, CalibrationOptions, ReferencingOptions, ActuatorMode
+from SmarActUtils import MoveMode, CalibrationOptions, ReferencingOptions, ActuatorMode, DeviceState
+
 
 class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
 
-    #host = PTS.device_property(dtype=str, doc="MCS2 IP address", mandatory=True)
+    # host = PTS.device_property(dtype=str, doc="MCS2 IP address", mandatory=True)
     host = PTS.device_property(dtype=str, doc="MCS2 IP address")
-    #port = PTS.device_property(dtype=PT.DevShort, doc="MCS2 port number", mandatory=False, default_value=55551)
+    # port = PTS.device_property(dtype=PT.DevShort, doc="MCS2 port number", mandatory=False, default_value=55551)
     port = PTS.device_property(dtype=PT.DevShort, doc="MCS2 port number", default_value=55551)
-
+    polling = PTS.device_property(dtype=PT.DevULong, doc="Polling", default_value=2000)
 
     def init_device(self):
         """ Initialize device
@@ -32,15 +35,37 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
 
         # Create socket and connect to device
         self.s = None
+        self._nch = 0
+        self._nmod = 0
+        self._module_state = []
+        self._module_temp = []
+        self._serial_number = ""
+
         try:
             self.__mcs_connect()
+            self.set_state(PT.DevState.ON)
 
         except OSError as e:
             # Connection failed
             self.s = None
-            self.set_state(PT.DevState.FAULT)
             # Log error
             self.error_stream("init_device(): error while connecting to device (Error: {0!s})".format(e))
+            self.set_state(PT.DevState.FAULT)
+
+        # Enable events on attributes
+        self.ModuleState.set_change_event(True, False)
+        self.ModuleTemperature.set_change_event(True, False)
+        self.SerialNumber.set_change_event(True, False)
+
+        # Set polling time for State command
+        self.poll_command("State", 500)
+        self.debug_stream("Configured events")
+
+        # Start monitoring thread
+        self._terminate = False
+        self.monitor_lock = threading.Lock()
+        self.monitor = threading.Thread(target=self.device_monitoring)
+        self.monitor.start()
 
     def __mcs_connect(self):
         if self.s is None:
@@ -49,13 +74,24 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             self.s.connect((self.host, self.port))
             self.s.settimeout(0.1)
 
-            # Store number of channels in the controller
+            self._nmod = 0
             self._nch = 0
             try:
+                # Get number of modules
+                self.s.send(b":DEV:NOBM?\r\n")
+                rsp = self.s.recv(10).strip()
+                self._nmod = int(rsp)
+                self.debug_stream("Controller has {0:d} modules".format(self._nmod))
+                # Get number of channels
                 self.s.send(b":DEV:NOCH?\r\n")
                 rsp = self.s.recv(10).strip()
                 self._nch = int(rsp)
                 self.debug_stream("Controller has {0:d} channels".format(self._nch))
+                # Get serial number
+                self.s.send(b":DEV:SNUM?\r\n")
+                rsp = self.s.recv(100).strip()
+                self._serial_number = str(rsp)
+                self.debug_stream("Controller has {0:s} serial number".format(self._serial_number))
             except OSError as e:
                 self.error_stream("__mcs_connect(): Failed to get number of channels (Error: {0!s})".format(e))
                 self.s.close()
@@ -67,21 +103,78 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
                 self.s = None
                 raise OSError("Failed to get number of channles")
 
-    def always_executed_hook(self):
+    def device_monitoring(self):
+        last_connect_attempt = time.time()
+        self.debug_stream("Started monitoring thread")
+        while not self._terminate:
+            b = time.time()
+
+            if self.get_state() == PT.DevState.FAULT:
+                # Try to reconnect
+                if time.time() - last_connect_attempt > 10:
+                    try:
+                        last_connect_attempt = time.time()
+                        self.__mcs_connect()
+                        self.set_state(PT.DevState.ON)
+                    except Exception as e:
+                        self.error_stream("Reconnect filed (Error: {0!s})".format(e))
+
+            else:
+                # Monitor device
+                try:
+                    # Get device state
+                    rsp = self._send_command_with_response(b":DEV:STAT?")
+                    state = DeviceState(int(rsp))
+
+                    # Check state
+                    if state.isLocked() or state.internalFailure():
+                        raise OSError("Device is in fault state and cannot operate")
+
+                    # Get module states and temperatures
+                    m_states = []
+                    m_temp = []
+                    for i in range(self._nmod):
+                        # State
+                        rsp = self._send_command_with_response(":MOD{0:d}:STAT?".format(i))
+                        m_states.append(int(rsp))
+                        self.debug_stream("Got {0:d} state for module {1:d}".format(m_states[-1], i))
+                        # Temperature
+                        rsp = self._send_command_with_response(":MOD{0:d}:TEMP?".format(i))
+                        m_temp.append(int(rsp))
+                        self.debug_stream("Got {0:d} state for module {1:d}".format(m_temp[-1], i))
+
+                    if len(m_states) != len(self._module_state) or np.sum(np.array(m_states) - np.array(self._module_state)) != 0:
+                        self._module_state = m_states
+                        self.push_change_event("ModuleState", self._module_state, len(self._module_state))
+
+                    if len(m_temp) != len(self._module_temp) or np.sum(np.array(m_temp) - np.array(self._module_temp)) != 0:
+                        self._module_temp = m_temp
+                        self.push_change_event("ModuleTemperature", self._module_temp, len(self._module_temp))
+
+                except PT.DevFailed as e:
+                    self.error_stream("Monitoring failed (Error: {0!s})".format(e.args[0].desc))
+
+            elapsed = time.time() - b
+            if elapsed < self.polling / 1000.0:
+                time.sleep(self.polling / 1000.0 - elapsed)
+
+    def command_allowed(self, attr=None):
         """ Check at every call if the connection is ok. In case reconnect
         """
-        if self.s is None:
-            try:
-                self.__mcs_connect()
-
-            except OSError as e:
-                # Failed to reconnect
-                self.error_stream("always_executed_hook(): failed to reconnect to device (Error: {0!s})".format(e))
-                PT.Except.throw_exception("Reconnection failed", str(e), "SmarActController::always_executed_hook()")
+        if self.get_state() == PT.DevState.FAULT:
+            if attr is None:
+                PT.Except.throw_exception("Fault state", "Command not allowed because device is in fault state", "SmarActController::command_allowed()")
+            else:
+                return False
+        else:
+            return True
 
     def delete_device(self):
         """ Delete device
         """
+        if self.monitor:
+            self._terminate = True
+            self.monitor.join()
         if self.s is not None:
             try:
                 self.s.close()
@@ -92,69 +185,73 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         """ Send a command without response
         """
         self.debug_stream("Sending command: {0!s}".format(cmd))
-        try:
-            if type(cmd) != bytes:
-                cmd = cmd.encode()
-
-
-            cmd = cmd + b"\r\n"
-
-            self.s.send(cmd)
-
-        except OSError as e:
+        with self.monitor_lock:
             try:
-                self.s.close()
-            except OSError:
-                self.error_stream("_send_command(): Failed to close socket (Error: {0!s})".format(e))
-            self.s = None
-            PT.Except.throw_exception("Send failed", "Failed to send command (Error: {0!s})".format(e), "SmarActController::_send_command()")
+                if type(cmd) != bytes:
+                    cmd = cmd.encode()
+
+                cmd = cmd + b"\r\n"
+
+                self.s.send(cmd)
+
+            except OSError as e:
+                try:
+                    self.s.close()
+                except OSError:
+                    self.error_stream("_send_command(): Failed to close socket (Error: {0!s})".format(e))
+                self.s = None
+                self.set_state(PT.DevState.FAULT)
+                PT.Except.throw_exception("Send failed", "Failed to send command (Error: {0!s})".format(e), "SmarActController::_send_command()")
 
     def _send_command_with_response(self, cmd):
         """ Send a command with a response
         """
         self.debug_stream("Sending command: {0!s}".format(cmd))
-        try:
-            if type(cmd) != bytes:
-                cmd = cmd.encode()
-            cmd = cmd + b"\r\n"
-
-            self.s.send(cmd)
-
-        except OSError as e:
-            # Close connection. We will reconnect at the next command
+        with self.monitor_lock:
             try:
-                self.s.close()
-            except OSError:
-                self.error_stream("_send_command_with_response(): Failed to close socket (Error: {0!s})".format(e))
-            self.s = None
-            PT.Except.throw_exception("Send failed", "Failed to send command (Error: {0!s})".format(e), "SmarActController::_send_command_with_response()")
+                if type(cmd) != bytes:
+                    cmd = cmd.encode()
+                cmd = cmd + b"\r\n"
 
-        try:
-            begin = time.time()
-            rsp = b""
-            while True:
-                tmp = self.s.recv(100)
-                if tmp[-2:] == b"\r\n":
-                    rsp += tmp
-                    break
-                else:
-                    rsp += tmp
+                self.s.send(cmd)
 
-                if time.time() - begin > 1:
-                    PT.Except.throw_exception("Receive timeout", "Receive timeout", "SmarActController::_send_command_with_response()")
-        except OSError as e:
+            except OSError as e:
+                # Close connection. We will reconnect at the next command
+                try:
+                    self.s.close()
+                except OSError:
+                    self.error_stream("_send_command_with_response(): Failed to close socket (Error: {0!s})".format(e))
+                self.s = None
+                self.set_state(PT.DevState.FAULT)
+                PT.Except.throw_exception("Send failed", "Failed to send command (Error: {0!s})".format(e), "SmarActController::_send_command_with_response()")
+
             try:
-                self.s.close()
-            except OSError:
-                self.error_stream("_send_command_with_response(): Failed to close socket (Error: {0!s})".format(e))
-            self.s = None
-            PT.Except.throw_exception("Receive failed", "Failed to receive response (Error: {0!s})".format(e), "SmarActController::_send_command_with_response()")
+                begin = time.time()
+                rsp = b""
+                while True:
+                    tmp = self.s.recv(100)
+                    if tmp[-2:] == b"\r\n":
+                        rsp += tmp
+                        break
+                    else:
+                        rsp += tmp
 
-        self.debug_stream("Got response: {0!s}".format(rsp.strip()))
-        return rsp.strip()
+                    if time.time() - begin > 1:
+                        PT.Except.throw_exception("Receive timeout", "Receive timeout", "SmarActController::_send_command_with_response()")
+            except OSError as e:
+                try:
+                    self.s.close()
+                except OSError:
+                    self.error_stream("_send_command_with_response(): Failed to close socket (Error: {0!s})".format(e))
+                self.s = None
+                self.set_state(PT.DevState.FAULT)
+                PT.Except.throw_exception("Receive failed", "Failed to receive response (Error: {0!s})".format(e), "SmarActController::_send_command_with_response()")
+
+            self.debug_stream("Got response: {0!s}".format(rsp.strip()))
+            return rsp.strip()
 
     @PTS.command(dtype_in=PT.DevULong, doc_in='Axis number',
-             dtype_out=PT.DevULong, doc_out='Unsigned short describing axis state')
+                 dtype_out=PT.DevULong, doc_out='Unsigned short describing axis state')
     def AxisState(self, argin):
         """
         Returns 16-bit value describing channel state:
@@ -176,6 +273,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             15 SA_CTL_CH_STATE_BIT_REFERENCE_MARK 0x8000
 
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::AxisState()")
 
@@ -193,10 +291,11 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             return 0
 
     @PTS.command(dtype_in=PT.DevULong, doc_in='Axis number',
-             dtype_out=PT.DevLong64, doc_out='Position in encoder steps')
+                 dtype_out=PT.DevLong64, doc_out='Position in encoder steps')
     def GetPosition(self, argin):
         """ Returns current position in encoder steps
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetPosition()")
 
@@ -217,6 +316,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             @param argin 0: Axis number
                          1: current position
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetPosition()")
 
@@ -238,6 +338,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             @param argin 0: Axis number
                          1: target position
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::Move()")
 
@@ -262,6 +363,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
          3 : scan mode relative
          4 : step mode
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetMoveMode()")
 
@@ -287,6 +389,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             4 : step mode
 
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetMoveMode()")
 
@@ -308,9 +411,10 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         Command GetStepAmplitude related method
         Description: Gets step amplitude for open-loop movements.
-	     Value range: 1 - 65535
-	     65535 corresponds to 100V
+            Value range: 1 - 65535
+            65535 corresponds to 100V
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetStepAmplitude()")
 
@@ -331,6 +435,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             Value range: 1 - 65535
             65535 corresponds to 100V
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetStepAmplitude()")
 
@@ -353,6 +458,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Description: Gets step frequency for open-loop movements.
             Value range: 1 - 20000 Hz
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetStepFrequency()")
 
@@ -372,6 +478,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Description: Sets step frequency for open-loop movements.
             Value range: 1 - 20000 Hz
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetStepFrequency()")
 
@@ -393,6 +500,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetVelocity related method
         Description: Gets closed loop velocity.
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetVelocity()")
 
@@ -412,6 +520,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Description: Sets closed loop velocity
             Value range: 0 - 100000000000 (1e11)
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetVelocity()")
 
@@ -433,6 +542,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetHoldTime related method
         Description: Gets hold time for closed-loop movements.
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetHoldTime()")
 
@@ -450,10 +560,11 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         Command SetHoldTime related method
         Description: Sets hold time (time in ms the position is actively held after reaching the
-	                target posi-tion) for closed-loop movements.
-	                Value range: 0 - 4294967295 (0 disables holding,
-	                max value is for infinite, i.e. hold until motor is stopped)
+                     target posi-tion) for closed-loop movements.
+        Value range: 0 - 4294967295 (0 disables holding,
+                                     max value is for infinite, i.e. hold until motor is stopped)
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetHoldTime()")
 
@@ -475,7 +586,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
 #        Command GetPositionKnown related method
 #        Description: Finds out whether the physical position of this axis is known.
 #                     If false and the motor has an encoder with reference mark,
-#	                run command `Home`.
+#                     run command `Home`.
 #        """
 #        #TODO
 
@@ -485,11 +596,12 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetAxisType related method
         Description: return axis type as follows
 
-	            0: linear movement
-	            1: rotary movement
-	            2: goniometer
-	            3: tilt movement
+           0: linear movement
+           1: rotary movement
+           2: goniometer
+           3: tilt movement
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetAxisType()")
 
@@ -508,6 +620,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetMaxFrequency related method
         Description: Gets maximum frequency for closed-loop movements.
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetMaxFrequency()")
 
@@ -527,6 +640,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Description: Sets maximum frequency for closed-loop movements.
                      Value range: 50 - 20000 Hz
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetMaxFrequency()")
 
@@ -548,6 +662,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetSensorType related method
         Description: Get positioner type number, check with hardware doc
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetPositionerType()")
 
@@ -566,6 +681,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetMaxStepLimit related method
         Description: returns currently set range limit maximum
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetMaxStepLimit()")
 
@@ -584,8 +700,9 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command SetMaxStepLimit related method
         Description:
             @param argin 0: axis number
-	                    1: maximum range limit
+                         1: maximum range limit
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetMaxStepLimit()")
 
@@ -627,6 +744,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             @param argin 0: axis number
                          1: minimum range limit
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetMinStepLimit()")
 
@@ -648,8 +766,9 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command Calibrate related method
         Description: Perform calibration for channnel <axis number>. Should only be necessary
                      if setup was changed (e.g. new / different positioner connected).
-	                Requires encoded positioner, encoder has to be enabled.
+                     Requires encoded positioner, encoder has to be enabled.
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::Calibrate()")
 
@@ -667,12 +786,13 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetCalibrationOptions related method
         Description: Get calibration option (used with Calibrate command)
 
-	                bit 0: Direction
-	                bit 1: Detect Distance Code Inversion
-	                bit 2: Advanced Sensor Correction
-	                bit 8: Limited Travel Range
-	                all other bits are reserved
+            bit 0: Direction
+            bit 1: Detect Distance Code Inversion
+            bit 2: Advanced Sensor Correction
+            bit 8: Limited Travel Range
+            all other bits are reserved
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetCalibrationOptions()")
 
@@ -696,12 +816,12 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
                         bit 8: Limited Travel Range
                         all other bits are reserved
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetCalibrationOptions()")
 
         if argin[0] < 0 or argin[0] >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::SetCalibrationOptions()")
-
 
         try:
             opt = CalibrationOptions(argin[1])
@@ -721,8 +841,8 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
 #        """
 #        Command HoldPosition related method
 #        Description: Enables holding the current position by setting the move mode to
-#	                closed loop relative movement and then driving by 0 encoder steps.
-#	                (c.f. programmer manual, 2.6.4)
+#                   closed loop relative movement and then driving by 0 encoder steps.
+#                   (c.f. programmer manual, 2.6.4)
 #        """
 #        pass
 
@@ -732,6 +852,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command Stop related method
         Description: Stop movement on axis <axis number>
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::Stop()")
 
@@ -746,10 +867,11 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         Command GetSensorMode related method
         Description: returns sensor mode
-	                0: sensor disabled
-	                1: sensor continuously supplied with power
-	                2: sensor power supply pulsed to keep the heat generation low
+                    0: sensor disabled
+                    1: sensor continuously supplied with power
+                    2: sensor power supply pulsed to keep the heat generation low
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetSensorMode()")
 
@@ -767,19 +889,20 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         Command SetSensorMode related method
         Description:
-	 	@param argin 0: axis number
-	                  1: sensor mode
-	                     0: sensor disabled
-	                     1: sensor continuously supplied with power
-	                     2: sensor power supply pulsed to keep the heat generation low
+            @param argin 0: axis number
+                         1: sensor mode
+                             0: sensor disabled
+                             1: sensor continuously supplied with power
+                             2: sensor power supply pulsed to keep the heat generation low
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetSensorMode()")
 
         if argin[0] < 0 or argin[0] >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::SetSensorMode()")
 
-        if argin[1]< 0 or argin[1] > 2:
+        if argin[1] < 0 or argin[1] > 2:
             PT.Except.throw_exception("Bad option", "Selected sensor mode {0:d} is not valid".format(argin[1]), "SmarActController::SetSensorMode()")
 
         try:
@@ -794,6 +917,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetAcceleration related method
         Description: Gets closed loop acceleration
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetAcceleration()")
 
@@ -812,6 +936,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command SetAcceleration related method
         Description: Sets closed loop acceleration
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetAcceleration()")
 
@@ -830,6 +955,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetActuatorMode related method
         Description: Gets currently set actuator mode
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetActuatorMode()")
 
@@ -848,6 +974,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command SetActuatorMode related method
         Description: set actuator mode
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetActuatorMode()")
 
@@ -870,6 +997,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command Home related method
         Description: home axis (start referencing procedure)
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::Stop()")
 
@@ -911,6 +1039,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetReferencingOptions related method
         Description: gets referencing options
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetReferencingOptions()")
 
@@ -923,7 +1052,6 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         except ValueError as e:
             PT.Except.throw_exception("Conversion failed", "Failed to convert string (Error: {0!s})".format(e), "SmarActController::GetReferencingOptions()")
 
-
     @PTS.command(dtype_in=PT.DevVarLongArray, doc_in='Axis number, referencing options', dtype_out=None, doc_out='')
     def SetReferencingOptions(self, argin):
         """
@@ -932,6 +1060,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             @param argin 0: axis number
                          1: referencing options
         """
+        self.command_allowed()
         if len(argin) != 2:
             PT.Except.throw_exception("Bad number of parameters", "This command requires two input parameters", "SmarActController::SetReferencingOptions()")
 
@@ -954,6 +1083,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetSensorName related method
         Description: Get description of sensor type number, check with hardware doc
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetPositionerName()")
 
@@ -970,11 +1100,12 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         Command GetSensorReferenceType related method
         Description: Get sensor reference mark type:
-	                  no reference mark: 0
-	                  end stop:          1
-	                  single mark:       2
-	                  distance coded:    3
+                        no reference mark: 0
+                        end stop:          1
+                        single mark:       2
+                        distance coded:    3
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetSensorReferenceType()")
 
@@ -993,6 +1124,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         Command GetBaseResolution related method
         Description: the basic resolution of the position value in powers of 10 (valid values: -12, -9, -6, -3, 0)
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetBaseResolution()")
 
@@ -1017,6 +1149,7 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
             SA_CTL_UNIT_DEGREE ( 0x00000003 )
 
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetBaseUnit()")
 
@@ -1034,9 +1167,8 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         Command GetLastError related method
         Description: return the last error of the selected channel
-
-
         """
+        self.command_allowed()
         if argin >= self._nch:
             PT.Except.throw_exception("Bad channel", "Selected channel {0:d} is not available (number of channels {1:d})".format(argin, self._nch), "SmarActController::GetLastError()")
 
@@ -1049,11 +1181,23 @@ class SmarActController(PTS.Device, metaclass=PTS.DeviceMeta):
         except ValueError as e:
             PT.Except.throw_exception("Conversion failed", "Failed to convert string (Error: {0!s})".format(e), "SmarActController::GetLastError()")
 
+    @PTS.attribute(name="ModuleState", label="Modules State", dtype=[PT.DevULong, ], max_dim_x=32, doc="Driver module state", fisallowed='command_allowed')
+    def ModuleState(self):
+        return self._module_state
+
+    @PTS.attribute(name="ModuleTemperature", label="Modules temperature", dtype=[PT.DevDouble, ], max_dim_x=32, doc="Driver module temperature", fisallowed='command_allowed')
+    def ModuleTemperature(self):
+        return self._module_temp
+
+    @PTS.attribute(name="SerialNumber", label="Serial number", dtype=str, doc="Device serial number", fisallowed='command_allowed')
+    def SerialNumber(self):
+        return self._serial_number
+
 
 if __name__ == "__main__":
     # Start device server
     try:
-        PTS.run( (SmarActController, ) )
+        PTS.run((SmarActController, ))
     except PT.DevFailed as e:
         print("Tango exception: {:}".format(e.args[0].desc))
     except Exception as e:

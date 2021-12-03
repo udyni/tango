@@ -8,6 +8,7 @@ Created on Mon Jan 11 09:48:18 2021
 
 """
 
+
 class SAEnum(object):
 
     def __init__(self, value):
@@ -44,7 +45,7 @@ class AxisState(SAEnum):
     SA_CTL_CH_STATE_BIT_IS_CALIBRATED = 0x0040
     SA_CTL_CH_STATE_BIT_IS_REFERENCED = 0x0080
     SA_CTL_CH_STATE_BIT_END_STOP_REACHED = 0x0100
-    SA_CTL_CH_STATE_BIT_RANGE_LIMIT_REACHED=  0x0200
+    SA_CTL_CH_STATE_BIT_RANGE_LIMIT_REACHED = 0x0200
     SA_CTL_CH_STATE_BIT_FOLLOWING_LIMIT_REACHED = 0x0400
     SA_CTL_CH_STATE_BIT_MOVEMENT_FAILED = 0x0800
     SA_CTL_CH_STATE_BIT_IS_STREAMING = 0x1000
@@ -142,9 +143,9 @@ class CalibrationOptions(SAEnum):
 
     def isValid(self):
         mask = (self.SA_CTL_CALIB_OPT_BIT_DIRECTION |
-               self.SA_CTL_CALIB_OPT_BIT_DIST_CODE_INV_DETECT |
-               self.SA_CTL_CALIB_OPT_BIT_ASC_CALIBRATION |
-               self.SA_CTL_CALIB_OPT_BIT_LIMITED_TRAVEL_RANGE)
+                self.SA_CTL_CALIB_OPT_BIT_DIST_CODE_INV_DETECT |
+                self.SA_CTL_CALIB_OPT_BIT_ASC_CALIBRATION |
+                self.SA_CTL_CALIB_OPT_BIT_LIMITED_TRAVEL_RANGE)
         return self._val == (self._val & mask)
 
     def getValue(self):
@@ -437,3 +438,110 @@ class BaseUnit(SAEnum):
 
     def isDegree(self):
         return self._val == self.SA_CTL_UNIT_DEGREE
+
+
+class DeviceState(SAEnum):
+    SA_CTL_DEV_STATE_BIT_HM_PRESENT = 0x00000001
+    SA_CTL_DEV_STATE_BIT_MOVEMENT_LOCKED = 0x00000002
+    SA_CTL_DEV_STATE_BIT_INTERNAL_COMM_FAILURE = 0x00000100
+    SA_CTL_DEV_STATE_BIT_IS_STREAMING = 0x00001000
+
+    def __str__(self):
+        return
+
+    def hasHM(self):
+        return self._val & self.SA_CTL_DEV_STATE_BIT_HM_PRESENT
+
+    def isLocked(self):
+        return self._val & self.SA_CTL_DEV_STATE_BIT_MOVEMENT_LOCKED
+
+    def internalFailure(self):
+        return self._val & self.SA_CTL_DEV_STATE_BIT_INTERNAL_COMM_FAILURE
+
+    def isStreaming(self):
+        return self._val & self.SA_CTL_DEV_STATE_BIT_IS_STREAMING
+
+
+class ModuleState(SAEnum):
+    SA_CTL_MOD_STATE_BIT_SM_PRESENT = 0x00000001
+    SA_CTL_MOD_STATE_BIT_BOOSTER_PRESENT = 0x00000002
+    SA_CTL_MOD_STATE_BIT_ADJUSTMENT_ACTIVE = 0x00000004
+    SA_CTL_MOD_STATE_BIT_IOM_PRESENT = 0x00000008
+    SA_CTL_MOD_STATE_BIT_INTERNAL_COMM_FAILURE = 0x00000100
+    SA_CTL_MOD_STATE_BIT_FAN_FAILURE = 0x00000800
+    SA_CTL_MOD_STATE_BIT_POWER_SUPPLY_FAILURE = 0x00001000
+    SA_CTL_MOD_STATE_BIT_HIGH_VOLTAGE_FAILURE = 0x00001000
+    SA_CTL_MOD_STATE_BIT_POWER_SUPPLY_OVERLOAD = 0x00002000
+    SA_CTL_MOD_STATE_BIT_HIGH_VOLTAGE_OVERLOAD = 0x00002000
+    SA_CTL_MOD_STATE_BIT_OVER_TEMPERATURE = 0x00004000
+
+    def __str__(self):
+        out = ""
+        if self.hasSensorModule():
+            out += "SM "
+        if self.hasBooster():
+            out += "BO "
+        if self.isAdjusting():
+            out += "ADJ "
+        if self.hasIOModule():
+            out += "IOM "
+        if self.hasErrors():
+            out += "Errors: "
+            if self.internalFailure():
+                out += "IF "
+            if self.fanFailure():
+                out += "FF "
+            if self.psuFailure():
+                out += "PF "
+            if self.hvFailure():
+                out += "HF "
+            if self.psuOverload():
+                out += "PO "
+            if self.hvOverload():
+                out += "HO "
+            if self.overTemperature():
+                out += "OT "
+        return out[:-1]
+
+    def hasErrors(self):
+        mask = (self.SA_CTL_MOD_STATE_BIT_FAN_FAILURE |
+                self.SA_CTL_MOD_STATE_BIT_HIGH_VOLTAGE_FAILURE |
+                self.SA_CTL_MOD_STATE_BIT_HIGH_VOLTAGE_OVERLOAD |
+                self.SA_CTL_MOD_STATE_BIT_INTERNAL_COMM_FAILURE |
+                self.SA_CTL_MOD_STATE_BIT_OVER_TEMPERATURE |
+                self.SA_CTL_MOD_STATE_BIT_POWER_SUPPLY_FAILURE |
+                self.SA_CTL_MOD_STATE_BIT_POWER_SUPPLY_OVERLOAD)
+        return bool(self._val & mask)
+
+    def hasSensorModule(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_SM_PRESENT
+
+    def hasBooster(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_BOOSTER_PRESENT
+
+    def isAdjusting(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_ADJUSTMENT_ACTIVE
+
+    def hasIOModule(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_IOM_PRESENT
+
+    def internalFailure(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_INTERNAL_COMM_FAILURE
+
+    def fanFailure(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_FAN_FAILURE
+
+    def psuFailure(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_POWER_SUPPLY_FAILURE
+
+    def hvFailure(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_HIGH_VOLTAGE_FAILURE
+
+    def psuOverload(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_POWER_SUPPLY_OVERLOAD
+
+    def hvOverload(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_HIGH_VOLTAGE_OVERLOAD
+
+    def overTemperature(self):
+        return self._val & self.SA_CTL_MOD_STATE_BIT_OVER_TEMPERATURE

@@ -18,16 +18,20 @@ import PyTango as PT
 import PyTango.server as PTS
 from SmarActUtils import MoveMode, CalibrationOptions, ReferencingOptions, ActuatorMode, AxisState, PosMovementType, SensorType, BaseUnit
 
+
 class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
 
-    #proxy = PTS.device_property(dtype=str, doc="MCS2 proxy device", mandatory=True)
-    #axis = PTS.device_property(dtype=PT.DevShort, doc="MCS2 axis number", mandatory=True)
-    #autoreference = PTS.device_property(dtype=PT.DevBoolean, doc="Automatically reference upon startup", mandatory=False, default_value=False)
-    #polling = PTS.device_property(dtype=PT.DevULong, doc="Polling period in ms", mandatory=False, default_value=500)
+    # proxy = PTS.device_property(dtype=str, doc="MCS2 proxy device", mandatory=True)
+    # axis = PTS.device_property(dtype=PT.DevShort, doc="MCS2 axis number", mandatory=True)
+    # autoreference = PTS.device_property(dtype=PT.DevBoolean, doc="Automatically reference upon startup", mandatory=False, default_value=False)
+    # polling = PTS.device_property(dtype=PT.DevULong, doc="Polling period in ms", mandatory=False, default_value=500)
     proxy = PTS.device_property(dtype=str, doc="MCS2 proxy device")
     axis = PTS.device_property(dtype=PT.DevShort, doc="MCS2 axis number")
     autoreference = PTS.device_property(dtype=PT.DevBoolean, doc="Automatically reference upon startup", default_value=False)
     polling = PTS.device_property(dtype=PT.DevULong, doc="Polling period in ms", default_value=500)
+    ref_reverse = PTS.device_property(dtype=PT.DevBoolean, doc="Invert referencing direction", default_value=False)
+    ref_movebefore = PTS.device_property(dtype=PT.DevDouble, doc="Relative move before starting referencing", default_value=0.0)
+    no_direct_control = PTS.device_propert(dtype=PT.DevBoolean, doc="Forbid direct control with SmaractGUI", default=False)
 
 #    MoveMode = PTS.attribute(
 #                        label="Move mode", dtype=PT.DevEnum, enum_labels=MoveMode.getEnum(),
@@ -46,15 +50,18 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
         # Call parent init
         PTS.Device.init_device(self)
 
+        # Work variables
+        self._do_reference = False
+
         # Create proxy
         self.dev = PT.DeviceProxy(self.proxy)
-        self.dev.ping()  # Fail init if proxy is not online
         self.debug_stream("Proxy device {0} up and running".format(self.dev.name()))
 
         try:
             self.initialize_device()
             self.set_state(PT.DevState.STANDBY)
-        except PT.DevFailed:
+        except PT.DevFailed as e:
+            self.error_stream("Failed device init (Error: {0!s})".format(e.args[0].desc))
             self.set_state(PT.DevState.FAULT)
 
         # Enable events on attributes
@@ -150,6 +157,17 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         pass
 
+    def command_allowed(self, attr=None):
+        """ Check device state
+        """
+        if self.get_state() == PT.DevState.FAULT:
+            if attr is None:
+                PT.Except.throw_exception("Fault state", "Command not allowed because device is in fault state", "SmarActPositioner::command_allowed()")
+            else:
+                return False
+        else:
+            return True
+
     def ConvertPosition(self, value):
         return float(value) * self._conv_factor
 
@@ -160,11 +178,19 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
         return float(value) * self._conv_factor
 
     @PTS.command(dtype_in=None, doc_in='', dtype_out=None, doc_out='')
+    def Stop(self):
+        """ Stop movement
+        """
+        self.command_allowed()
+        self.dev.Stop(self.axis)
+
+    @PTS.command(dtype_in=None, doc_in='', dtype_out=None, doc_out='')
     def Calibrate(self):
         """ Calibration routine
         """
+        self.command_allowed()
+        self.debug_stream("Starting calibration")
         try:
-            self.debug_stream("Starting calibration")
             # Check calibration options
             opt = CalibrationOptions(self.dev.GetCalibrationOptions(self.axis))
             self.debug_stream("Current calibration options: {0:d}".format(opt.getValue()))
@@ -185,33 +211,64 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
             self.dev.SetCalibrationOptions(np.array([self.axis, opt.getValue()], dtype=np.int32))
 
             # Start calibration
-            self.debug_stream("Calibrate!")
             self.dev.Calibrate(self.axis)
+
+        except PT.DevFailed as e:
+            self.error_stream("Calibration failed (Error: {0!s})".format(e.args[0].desc))
+            PT.Except.re_throw_exception(e, "Calibration failed", "Cablibration failed", "SmarActPositioner::Calibrate()")
         except Exception as e:
-            self.debug_stream("Error: {0!s}".format(e))
+            self.error_stream("Calibration failed (Error: {0!s})".format(e))
+            PT.Except.throw_exception(e, "Calibration failed", "Cablibration failed (Error: {0!s})".format(e), "SmarActPositioner::Calibrate()")
 
     @PTS.command(dtype_in=None, doc_in='', dtype_out=None, doc_out='')
     def Reference(self):
         """ Referencing routine
         """
-        self.debug_stream("Starting reference move")
+        self.command_allowed()
+        self.debug_stream("Booking reference move")
+        self._do_reference = True
+
+    def DoReference(self):
         # Check referencing options
         try:
+            # Relative move before referencing
+            if self.ref_movebefore != 0.0:
+                pos = self.dev.GetPosition(self.axis)
+                new_pos = pos + int(self.ref_movebefore / self.conv_factor)
+                self.dev.Move(np.array([self.axis, new_pos], np.int64))
+                self.waitForMotionDone()
+
             opt = ReferencingOptions(self.dev.GetReferencingOptions(self.axis))
             ref = SensorType(self.dev.GetSensorReferenceType(self.axis))
+            self.debug_stream("Reference type: {0:d}".format(ref.getValue()))
+
+            if ref.isDistanceCoded():
+                opt.setReverseDirection(True)
+            else:
+                opt.setReverseDirection(self.ref_reverse)
+
+            self.dev.SetReferencingOptions(np.array([self.axis, opt.getValue()], dtype=np.int32))
+            self.debug_stream("Referencing options: {0:d}".format(opt.getValue()))
+
+            # Start referencing
+            self.dev.Reference(self.axis)
+            self.waitForMotionDone()
+
+        except PT.DevFailed as e:
+            self.error_stream("Referencing failed (Error: {0!s})".format(e.args[0].desc))
         except Exception as e:
-            self.error_stream("ERROR: {0!s}".format(e))
-            return
+            self.error_stream("Referencing failed (Error: {0!s})".format(e))
 
-        self.debug_stream("Reference type: {0:d}".format(ref.getValue()))
+        self._do_reference = False
 
-        if ref.isDistanceCoded():
-            opt.setReverseDirection(True)
-
-        self.dev.SetReferencingOptions(np.array([self.axis, opt.getValue()], dtype=np.int32))
-
-        # Start referencing
-        self.dev.Reference(self.axis)
+    def waitForMotionDone(self):
+        while True:
+            time.sleep(0.2)
+            st = AxisState(self.dev.AxisState(self.axis))
+            if st.is_moving() or st.is_calibrating() or st.is_referencing():
+                continue
+            else:
+                break
 
     def PollingThread(self):
 
@@ -224,6 +281,10 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
 
             if self.get_state() != PT.DevState.FAULT:
                 # Poll only if state is not FAULT
+
+                # Handle referencing
+                if self._do_reference:
+                    self.DoReference()
 
                 # Poll state
                 try:
@@ -279,11 +340,12 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
                         self.error_stream("[{0:d}] {1!s} ({2!s})".format(i, e.args[i].desc, e.args[i].origin))
 
             else:
-                if count > 50:
+                if count > 10:
                     count = 0
                     # Try to reconnect to device
                     try:
                         self.initialize_device()
+                        self.set_state(PT.DevState.STANDBY)
                     except PT.DevFailed:
                         self.error_stream("Failed to reconnect with device")
                 else:
@@ -306,8 +368,18 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
 
         # Start move
         self.dev.Move(np.array([self.axis, pos], np.int64))
+        self.set_state(PT.DevState.MOVING)
 
-    @PTS.attribute(name="Velocity", label="Velocity", dtype=PT.DevDouble, format="%.2f", unit="um/s", doc="Axis velocity")
+    def is_Position_allowed(self, attr):
+        general = self.command_allowed(attr)
+        if not general:
+            return False
+        if general and attr != PT.AttReqType.READ_REQ and self.get_state() != PT.DevState.STANDBY:
+            return False
+        else:
+            return True
+
+    @PTS.attribute(name="Velocity", label="Velocity", dtype=PT.DevDouble, format="%.2f", unit="um/s", doc="Axis velocity", fisallowed='command_allowed')
     def Velocity(self):
         return self._vel
 
@@ -334,10 +406,10 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
             PT.Except.throw_exception("Failed to set velocity (set={0:d}, actual={1:d})".format(vel, new_vel))
 
         # Push change event
-        self._vel = value;
+        self._vel = value
         self.push_change_event("Velocity", self._vel)
 
-    @PTS.attribute(name="Acceleration", label="Acceleration", dtype=PT.DevDouble, format="%.2f", unit="um/s^2", doc="Axis acceleration")
+    @PTS.attribute(name="Acceleration", label="Acceleration", dtype=PT.DevDouble, format="%.2f", unit="um/s^2", doc="Axis acceleration", fisallowed='command_allowed')
     def Acceleration(self):
         return self._acc
 
@@ -364,18 +436,18 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
             PT.Except.throw_exception("Failed to set acceleration (set={0:d}, actual={1:d})".format(acc, new_acc))
 
         # Push change event
-        self._acc = value;
+        self._acc = value
         self.push_change_event("Acceleration", self._acc)
 
-    @PTS.attribute(name="MotionDone", label="Motion done", dtype=PT.DevBoolean, doc="Motion done")
+    @PTS.attribute(name="MotionDone", label="Motion done", dtype=PT.DevBoolean, doc="Motion done", fisallowed='command_allowed')
     def MotionDone(self):
         return self._mdone
 
-    @PTS.attribute(name="IsReferenced", label="Is referenced", dtype=PT.DevBoolean, doc="Axis is referenced")
+    @PTS.attribute(name="IsReferenced", label="Is referenced", dtype=PT.DevBoolean, doc="Axis is referenced", fisallowed='command_allowed')
     def IsReferenced(self):
         return self._isref
 
-    @PTS.attribute(name="IsCalibrated", label="Is calibrated", dtype=PT.DevBoolean, doc="Axis is calibrated")
+    @PTS.attribute(name="IsCalibrated", label="Is calibrated", dtype=PT.DevBoolean, doc="Axis is calibrated", fisallowed='command_allowed')
     def IsCalibrated(self):
         return self._iscal
 
@@ -383,7 +455,7 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
 if __name__ == "__main__":
     # Start device server
     try:
-        PTS.run( (SmarActPositioner, ) )
+        PTS.run((SmarActPositioner, ))
     except PT.DevFailed as e:
         print("Tango exception: {:}".format(e.args[0].desc))
     except Exception as e:
