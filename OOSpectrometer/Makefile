@@ -79,7 +79,7 @@ INC_DIR_USER= -I . -I$(SEABREEZE_HOME)/include -I ../Common
 #   - for a device server, tango libraries directories are automatically appended
 #   - '-L ../lib' is automatically appended in all cases
 #
-LIB_DIR_USER= -L$(SEABREEZE_HOME)/lib
+LIB_DIR_USER= -L$(SEABREEZE_HOME)/lib -L/usr/local/lib
 
 #=============================================================================
 # LFLAGS_USR is the list of user link flags
