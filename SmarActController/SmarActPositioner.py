@@ -16,7 +16,8 @@ import numpy as np
 import threading
 import PyTango as PT
 import PyTango.server as PTS
-from SmarActUtils import MoveMode, CalibrationOptions, ReferencingOptions, ActuatorMode, AxisState, PosMovementType, SensorType, BaseUnit
+from SmarActUtils import MoveMode, CalibrationOptions, ReferencingOptions, AxisState, SensorType, BaseUnit
+# from SmarActUtils import ActuatorMode, PosMovementType
 
 
 class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
@@ -234,7 +235,7 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
             # Relative move before referencing
             if self.ref_movebefore != 0.0:
                 pos = self.dev.GetPosition(self.axis)
-                new_pos = pos + int(self.ref_movebefore / self.conv_factor)
+                new_pos = pos + int(self.ref_movebefore / self._conv_factor)
                 self.dev.Move(np.array([self.axis, new_pos], np.int64))
                 self.waitForMotionDone()
 
@@ -242,10 +243,14 @@ class SmarActPositioner(PTS.Device, metaclass=PTS.DeviceMeta):
             ref = SensorType(self.dev.GetSensorReferenceType(self.axis))
             self.debug_stream("Reference type: {0:d}".format(ref.getValue()))
 
+            # Check if we have to reverse reference direction
+            opt.setStartDirection(self.ref_reverse)
+
+            # If the positioners has multiple references distance-coded set inversion after first reference to reduce movement
             if ref.isDistanceCoded():
                 opt.setReverseDirection(True)
             else:
-                opt.setReverseDirection(self.ref_reverse)
+                opt.setReverseDirection(False)
 
             self.dev.SetReferencingOptions(np.array([self.axis, opt.getValue()], dtype=np.int32))
             self.debug_stream("Referencing options: {0:d}".format(opt.getValue()))
