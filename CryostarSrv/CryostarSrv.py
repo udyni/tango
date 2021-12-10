@@ -28,43 +28,43 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
 
     # Attributes
     temperature = PTS.attribute(
-                        label="Temperature", dtype=PT.DevShort,
-                        access=PT.AttrWriteType.READ, unit="degC",
-                        doc="The temperature of the Ti:Saph crystal")
+        label="Temperature", dtype=PT.DevShort,
+        access=PT.AttrWriteType.READ, unit="degC",
+        doc="The temperature of the Ti:Saph crystal")
 
     delta = PTS.attribute(
-                        label="Temperature delta", dtype=PT.DevShort,
-                        access=PT.AttrWriteType.READ, unit="degC",
-                        doc="Difference in temperature between the sides of the Ti:Saph crystal")
+        label="Temperature delta", dtype=PT.DevShort,
+        access=PT.AttrWriteType.READ, unit="degC",
+        doc="Difference in temperature between the sides of the Ti:Saph crystal")
 
     pressure = PTS.attribute(
-                        label="Pressure", dtype=float,
-                        access=PT.AttrWriteType.READ, unit="mbar", format="%4.2e",
-                        doc="Pressure in the cryostat chamber")
+        label="Pressure", dtype=float,
+        access=PT.AttrWriteType.READ, unit="mbar", format="%4.2e",
+        doc="Pressure in the cryostat chamber")
 
     pump_status = PTS.attribute(
-                        label="Pump status", dtype="enum",
-                        enum_labels=["OFF", "ON", "ERROR"],
-                        access=PT.AttrWriteType.READ,
-                        doc="The status of the vacuum pump")
+        label="Pump status", dtype="enum",
+        enum_labels=["OFF", "ON", "ERROR"],
+        access=PT.AttrWriteType.READ,
+        doc="The status of the vacuum pump")
 
     vacuum_status = PTS.attribute(
-                        label="Vacuum status", dtype="enum",
-                        enum_labels=["Wrong level", "Operational", "In process"],
-                        access=PT.AttrWriteType.READ,
-                        doc="The status of the vacuum in the cryostat chamber")
+        label="Vacuum status", dtype="enum",
+        enum_labels=["Wrong level", "Operational", "In process"],
+        access=PT.AttrWriteType.READ,
+        doc="The status of the vacuum in the cryostat chamber")
 
     compressor_status = PTS.attribute(
-                        label="Compressor status", dtype="enum",
-                        enum_labels=["OFF", "READY", "ON"],
-                        access=PT.AttrWriteType.READ,
-                        doc="The status of the cryostat compressor")
+        label="Compressor status", dtype="enum",
+        enum_labels=["OFF", "READY", "ON"],
+        access=PT.AttrWriteType.READ,
+        doc="The status of the cryostat compressor")
 
     temperature_status = PTS.attribute(
-                        label="Temperature status", dtype="enum",
-                        enum_labels=["Wrong level", "Cooling off", "In process", "Operational"],
-                        access=PT.AttrWriteType.READ,
-                        doc="The status of the crystal temperature")
+        label="Temperature status", dtype="enum",
+        enum_labels=["Wrong level", "Cooling off", "In process", "Operational"],
+        access=PT.AttrWriteType.READ,
+        doc="The status of the crystal temperature")
 
     def init_device(self):
         """ Initialize device
@@ -140,7 +140,7 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
                     self.stopCompressor()
                     self.error_stream("Failed to open water valve. Compressor stopped.")
                 except PT.DevFailed as e:
-                    self.error_stream("Failed to stop compressor. Errors: ".format(counter))
+                    self.error_stream("Failed to stop compressor. Errors: ")
                     for i in range(len(e.args)):
                         self.error_stream("[{:d}] {:} (Origin: {:})".format(i, e.args[i].desc, e.args[i].origin))
 
@@ -148,7 +148,7 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
                 try:
                     if counter == 0:
                         # Read instrument status
-                        ans = self.dev.ReadInputRegisters( (0,4) )
+                        ans = self.dev.ReadInputRegisters((0, 4))
                         ts = time.time()
                         if len(ans) == 4:
                             # Pump status
@@ -179,7 +179,7 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
 
                     elif counter == 1:
                         # Read temperatures
-                        ans = self.dev.ReadInputRegistersSIG16( (0,2) )
+                        ans = self.dev.ReadInputRegistersSIG16((0, 2))
                         ts = time.time()
                         if len(ans) == 2:
                             # Temperature
@@ -199,7 +199,7 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
 
                     elif counter == 2:
                         # Read pressure
-                        ans = self.dev.ReadInputRegistersFloat( (0,1) )
+                        ans = self.dev.ReadInputRegistersFloat((0, 1))
                         ts = time.time()
                         if len(ans) == 1:
                             # Pressure
@@ -236,7 +236,7 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
 
             # Update status
             if self._pump_status == 0 and self._compressor_status == 0:
-                 # Everything off
+                # Everything off
                 self.set_state(PT.DevState.OFF)
             elif self._pump_status == 1 and self._compressor_status == 1:
                 # System ready to start cooling
@@ -319,31 +319,37 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
             return self._temperature, self._temperature_ts, PT.AttrQuality.ATTR_VALID
         else:
             return None
+
     def read_delta(self):
         if self._delta is not None:
             return self._delta, self._delta_ts, PT.AttrQuality.ATTR_VALID
         else:
             return None
+
     def read_pressure(self):
         if self._pressure is not None:
             return self._pressure, self._pressure_ts, PT.AttrQuality.ATTR_VALID
         else:
             return None
+
     def read_pump_status(self):
         if self._pump_status is not None:
             return self._pump_status, self._pump_status_ts, PT.AttrQuality.ATTR_VALID
         else:
             return None
+
     def read_vacuum_status(self):
         if self._vacuum_status is not None:
             return self._vacuum_status, self._vacuum_status_ts, PT.AttrQuality.ATTR_VALID
         else:
             return None
+
     def read_compressor_status(self):
         if self._compressor_status is not None:
             return self._compressor_status, self._compressor_status_ts, PT.AttrQuality.ATTR_VALID
         else:
             return None
+
     def read_temperature_status(self):
         if self._temperature_status is not None:
             return self._temperature_status, self._temperature_status_ts, PT.AttrQuality.ATTR_VALID
@@ -365,8 +371,8 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
                 PT.Except.throw_exception("Water valve fault", "Water valve is in fault state. Cannot start compressor.", inspect.currentframe().f_code.co_name)
             # Start compressor
             with self.dev_lock:
-                self.dev.ForceSingleCoilAmplitude( (0,1) ) # Start compressor
-                self.dev.ForceSingleCoilAmplitude( (1,0) ) # Full heating
+                self.dev.ForceSingleCoilAmplitude((0, 1))  # Start compressor
+                self.dev.ForceSingleCoilAmplitude((1, 0))  # Full heating
         elif self._compressor_status == 2:
             # Compressor already running...
             pass
@@ -379,8 +385,8 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
         """
         if self._compressor_status == 2:
             # Stop compressor
-            self.dev.ForceSingleCoilAmplitude( (0,0) ) # Stop compressor
-            self.dev.ForceSingleCoilAmplitude( (1,1) ) # Half heating
+            self.dev.ForceSingleCoilAmplitude((0, 0))  # Stop compressor
+            self.dev.ForceSingleCoilAmplitude((1, 1))  # Half heating
             # Close water valve
             th = threading.Thread(target=self.deferredWaterClose, daemon=True)
             th.start()
@@ -395,7 +401,7 @@ class CryostarSrv(PTS.Device, metaclass=PTS.DeviceMeta):
 if __name__ == "__main__":
     # Start device server
     try:
-        PTS.run( (CryostarSrv, ) )
+        PTS.run((CryostarSrv, ))
     except PT.DevFailed as e:
         print("Tango exception: {:}".format(e.args[0].desc))
     except Exception as e:
